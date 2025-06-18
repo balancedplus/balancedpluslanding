@@ -1,5 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Header from "./components/Header";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -19,13 +20,7 @@ export default function RootLayout({ children }) {
 
       <body>
         {/* HEADER traslúcido: el fondo y blur lo aplica globals.css */}
-        <header style={{ padding: "2rem", display: "flex", justifyContent: "center" }}>
-          <img
-            src="/LogoWhite.png"
-            alt="Logo Balanced+"
-            style={{ height: 45, objectFit: "contain" }}
-          />
-        </header>
+        <Header/>
 
         {/* MAIN ocupa toda la altura restante */}
         <main style={{ display: "flex", justifyContent: "center", alignItems: "center",

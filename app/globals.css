@@ -28,14 +28,28 @@ body {
 }
 
 header {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 1rem;
   position: sticky;
   top: 0;
-  z-index: 1000;
+  display: flex;
+  justify-content: center;
   background-color: #111918;
+  padding: 2rem;
+  transition: padding 0.3s ease;
+  z-index: 1000;
+}
+
+header.shrink {
+  padding: 0.8rem;
+}
+
+header img {
+  height: 45px;
+  object-fit: contain;
+  transition: height 0.3s ease;
+}
+
+header.shrink img {
+  height: 30px;
 }
 
 .landing-wrapper {
