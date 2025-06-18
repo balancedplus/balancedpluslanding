@@ -52,6 +52,8 @@ header.shrink img {
   height: 30px;
 }
 
+.sentinel { height: 1px; }
+
 .landing-wrapper {
   position: relative;
   height: 100vh;
