@@ -35,21 +35,26 @@ export default function ScheduleGrid() {
       </h1>
 
       {/* Botones de filtro */}
-      <div className="flex flex-wrap gap-4 justify-center mb-6">
-        {["Yoga", "P. Reformer", "Funcional", "Barre"].map((type) => (
-          <button
-            key={type}
-            onClick={() => setFilter(type)}
-            className={`px-4 py-2 font-medium rounded-full transition-colors`}
-            style={{
-              backgroundColor: filter === type ? 'rgb(173,173,174)' : 'transparent',
-              color: filter === type ? 'white' : 'rgb(173,173,174)',
-            }}
-          >
-            {type}
-          </button>
-        ))}
+      {/* Contenedor con scroll horizontal */}
+      <div className="overflow-x-auto hide-scrollbar mb-6">
+        <div className="flex flex-nowrap gap-4 justify-start md:justify-center">
+          {["Yoga", "P. Reformer", "Funcional", "Barre"].map((type) => (
+            <button
+              key={type}
+              onClick={() => setFilter(type)}
+              className="px-4 py-2 font-medium rounded-full transition-colors flex-shrink-0"
+              style={{
+                backgroundColor: filter === type ? 'rgb(173,173,174)' : 'transparent',
+                color: filter === type ? 'white' : 'rgb(173,173,174)',
+              }}
+            >
+              {type}
+            </button>
+          ))}
+        </div>
       </div>
+
+
 
       {/* Grid con scroll horizontal */}
       <div className="overflow-x-auto">

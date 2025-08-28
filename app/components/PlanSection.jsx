@@ -30,9 +30,10 @@ const PlanSection = ({ title, plans }) => {
               style={{ backgroundColor: "#cbc8bf", padding: '1.5rem' }}
             >
               <h3 className="text-3xl font-thin text-white mt-4">{plan.title}</h3>
-              <p className="mt-5 text-8xl font-thin text-white">
-                {plan.price} <span className="text-3xl ml-0 align-bottom">€</span>
+              <p className="mt-5 text-8xl font-thin text-white inline-flex items-end">
+                {plan.price} <span className="text-3xl ml-2">€</span>
               </p>
+
               <p className="mt-2 text-sm text-white">{plan.sessionPrice}</p>
               <p className="mb-4 font-thin text-white">Sin permanencia</p>
             </div>
