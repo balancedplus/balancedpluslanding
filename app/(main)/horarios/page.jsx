@@ -4,13 +4,13 @@ import { useState } from "react";
 import { classSchedules } from "../../../data/classSchedules";
 
 const hours = [
-  "7:00-8:00","8:00-9:00","8:30-9:30","9:00-10:00","9:30-10:30",
+  "7:00-8:00","8:00-9:00","8:30-9:30","9:00-10:00","9:30-10:30", "10:00-11:00",
   "10:30-11:30","12:30-13:30","13:30-14:30","14:30-15:30","15:30-16:30",
   "16:30-17:30","17:00-18:00","17:30-18:30","18:00-19:00","18:30-19:30",
   "19:00-20:00","19:30-20:30","20:00-21:00"
 ];
 
-const days = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
+const days = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
 const typeColors = {
   Yoga: "rgb(182, 179, 170)",
@@ -58,7 +58,7 @@ export default function ScheduleGrid() {
 
       {/* Grid con scroll horizontal */}
       <div className="overflow-x-auto">
-        <div className="min-w-[700px] grid grid-cols-6 gap-2">
+        <div className="min-w-[700px] grid grid-cols-7 gap-2">
           {/* Header días */}
           <div className="text-center py-2"></div>
           {days.map((day) => (
@@ -71,7 +71,7 @@ export default function ScheduleGrid() {
           {hours.map((hour) => (
             <div key={hour} className="contents">
               <div
-                className="px-2 py-1 text-center"
+                className="px-2 py-1 text-center whitespace-nowrap"
                 style={{
                   color: 'rgb(173, 173, 174)',
                   position: 'sticky',
@@ -100,7 +100,7 @@ export default function ScheduleGrid() {
                     {cells.map((cell, index) => (
                       <div
                         key={index}
-                        className="w-full flex-1 flex items-center justify-center rounded-md text-center text-white transition-opacity duration-500 opacity-0 animate-fadeIn"
+                        className="w-full flex-1 flex items-center justify-center rounded-md text-center text-white transition-opacity duration-500 opacity-0 animate-fadeIn whitespace-nowrap"
                         style={{ backgroundColor: typeColors[cell.type], padding: "0.25rem" }}
                       >
                         {cell.type}
