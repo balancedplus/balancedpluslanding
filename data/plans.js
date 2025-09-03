@@ -46,7 +46,7 @@ export const classPlans = [
   {
     title: "Clases Combinadas e Ilimitadas",
     plans: [
-      { title: "Clases Combinadas + Sesiones Ilimitadas", price: "160"}
+      { title: "Clases Combinadas + Sesiones Ilimitadas", price: "140"}
     ],
   },
 ];
