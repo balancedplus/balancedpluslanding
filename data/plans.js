@@ -10,9 +10,9 @@ export const classPlans = [
   {
     title: "Entrenamiento Funcional",
     plans: [
-      { title: "4 x MES", price: "55", sessionPrice: "13.75 por sesión" },
-      { title: "8 x MES", price: "70", sessionPrice: "8.75 por sesión" },
-      { title: "12 x MES", price: "80", sessionPrice: "6.67 por sesión" },
+      { title: "4 x MES", price: "45", sessionPrice: "11.25 por sesión" },
+      { title: "8 x MES", price: "60", sessionPrice: "7.5 por sesión" },
+      { title: "12 x MES", price: "70", sessionPrice: "5.83 por sesión" },
     ],
   },
   {

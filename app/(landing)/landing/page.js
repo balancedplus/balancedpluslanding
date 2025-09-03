@@ -158,7 +158,7 @@ export default function Home() {
           Campolivar, Valencia, España
         </address>
         <a
-          href="https://www.google.es/maps/place/Club+Deportivo+Campo+Olivar/@39.5274531,-0.4257854,20.1z/data=!4m6!3m5!1s0xd60451e027bbb9f:0xa9dae2b42f88c367!8m2!3d39.5275323!4d-0.4258424!16s%2Fg%2F1z44b5xbg?hl=es&entry=ttu&g_ep=EgoyMDI1MDYxMS4wIKXMDSoASAFQAw%3D%3D"
+          href="https://www.google.es/maps/place/Balanced%2B/@39.5274775,-0.4283085,940m/data=!3m2!1e3!4b1!4m6!3m5!1s0xd6045b0eacac64d:0x66baae4966c60ee4!8m2!3d39.5274775!4d-0.4257336!16s%2Fg%2F11yjmfpb5f?hl=es&entry=ttu&g_ep=EgoyMDI1MDgyNS4wIKXMDSoASAFQAw%3D%3D"
           target="_blank"
           rel="noopener noreferrer"
           className="mt-4 inline-flex items-center gap-2 rounded-md border border-white/20 px-4 py-2 text-sm font-semibold text-gray-200 transition hover:bg-white/40"
