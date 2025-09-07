@@ -58,11 +58,6 @@ export default function RegisterPage() {
       return;
     }
 
-    if (!form.gender) {
-      setError("Debes seleccionar un género.");
-      return;
-    }
-
     try {
       await register(form);
       setRegistered(true);
@@ -123,7 +118,7 @@ export default function RegisterPage() {
         <input
           type="text"
           name="name"
-          placeholder="Nombre"
+          placeholder="* Nombre"
           value={form.name}
           onChange={handleChange}
           className={floatClass}
@@ -133,7 +128,7 @@ export default function RegisterPage() {
         <input
           type="text"
           name="surname"
-          placeholder="Apellido"
+          placeholder="* Apellido"
           value={form.surname}
           onChange={handleChange}
           className={floatClass}
@@ -143,7 +138,7 @@ export default function RegisterPage() {
         <input
           type="email"
           name="email"
-          placeholder="Correo electrónico"
+          placeholder="* Correo electrónico"
           value={form.email}
           onChange={handleChange}
           className={floatClass}
@@ -155,7 +150,7 @@ export default function RegisterPage() {
           <input
             type="password"
             name="password"
-            placeholder="Contraseña"
+            placeholder="* Contraseña"
             value={form.password}
             onChange={handleChange}
             className={floatClass + " flex-1"}
@@ -164,7 +159,7 @@ export default function RegisterPage() {
           <input
             type="password"
             name="confirmPassword"
-            placeholder="Repetir contraseña"
+            placeholder="* Repetir contraseña"
             value={form.confirmPassword}
             onChange={handleChange}
             className={floatClass + " flex-1"}
@@ -175,22 +170,19 @@ export default function RegisterPage() {
         {/* Fila Fecha / Género */}
         <div className="flex gap-4">
           <input
-            type="text"
+            type={form.birthDate ? "date" : "text"}
             name="birthDate"
             value={form.birthDate}
             onChange={handleChange}
-            placeholder="Fecha de nacimiento"
-            onFocus={(e) => (e.target.type = "date")}
-            onBlur={(e) => !form.birthDate && (e.target.type = "text")}
+            placeholder="Fecha de nacimiento (opcional)"
             className={floatClass + " flex-1"}
-            required
-          />
+            />
+
           <select
             name="gender"
             value={form.gender}
             onChange={handleChange}
             className={floatClass + " flex-1"}
-            required
           >
             <option value="" disabled>Género</option>
             <option value="Masculino">Masculino</option>
@@ -204,7 +196,7 @@ export default function RegisterPage() {
           <input
             type="text"
             name="phoneNumber"
-            placeholder="Teléfono"
+            placeholder="* Teléfono"
             value={form.phoneNumber}
             onChange={handleChange}
             className={floatClass + " flex-1"}
@@ -213,13 +205,17 @@ export default function RegisterPage() {
           <input
             type="text"
             name="zipCode"
-            placeholder="Código postal"
+            placeholder="* Código postal" 
             value={form.zipCode}
             onChange={handleChange}
             className={floatClass + " flex-1"}
             required
           />
         </div>
+
+        <p className="text-xs text-gray-500 mt-2">
+        Los campos marcados con * son obligatorios.
+        </p>
 
         {error && <p className="text-sm text-center text-red-500">{error}</p>}
 

@@ -11,7 +11,11 @@ import DateSelect from "../../components/DateSelect";
 
 export default function ReservasPage() {
   const { user, isVerified } = useAuth();
-  const [dateStr, setDateStr] = useState(() => new Date().toISOString().split("T")[0]);
+ const [dateStr, setDateStr] = useState(() => {
+  const today = new Date();
+  const defaultDate = new Date(today.getFullYear(), 8, 16);
+  return defaultDate.toISOString().split("T")[0];
+});
   const [classes, setClasses] = useState([]);
   const [userReservations, setUserReservations] = useState([]);
   const [loading, setLoading] = useState(true);

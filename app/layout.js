@@ -1,5 +1,6 @@
 import './globals.css'
 import Header from './components/Header'
+import Footer from './components/Footer'
 import AuthProvider from './components/AuthProvider'
 import { ToastProvider } from './components/ToastProvider'
 
@@ -20,6 +21,7 @@ export default function RootLayout({ children }) {
           <ToastProvider>
             <Header />
             <main className="min-h-screen">{children}</main>
+            <Footer/ >
           </ToastProvider>
         </AuthProvider>
       </body>
