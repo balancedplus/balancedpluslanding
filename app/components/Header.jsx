@@ -1,15 +1,33 @@
 'use client';
 import Link from 'next/link';
 import { useAuth } from './AuthProvider';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Header() {
   const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showHeader, setShowHeader] = useState(true);
+  const [lastScroll, setLastScroll] = useState(0);
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
   const handleLinkClick = () => setMenuOpen(false);
+
+  // Detectar scroll para esconder header en móvil
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScroll = window.scrollY;
+      if (currentScroll > lastScroll && currentScroll > 50) {
+        setShowHeader(false); // Scroll hacia abajo -> ocultar
+      } else {
+        setShowHeader(true); // Scroll hacia arriba -> mostrar
+      }
+      setLastScroll(currentScroll);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScroll]);
 
   const leftLinks = [
     { href: '/', label: 'Inicio' },
@@ -27,7 +45,11 @@ export default function Header() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 w-full z-50 bg-[rgb(244,244,244)] shadow-sm">
+      <motion.header
+        animate={{ y: showHeader ? 0 : -80 }} // Desliza hacia arriba 80px al esconder
+        transition={{ duration: 0.3, ease: 'easeInOut' }}
+        className="fixed top-0 left-0 w-full z-50 bg-[rgb(244,244,244)] shadow-sm"
+      >
         <div className="max-w-6xl mx-auto px-4 py-6 flex items-center justify-between relative">
           {/* Nav izquierda */}
           <nav className="hidden md:flex space-x-6 text-[rgb(173,173,174)]">
@@ -40,7 +62,7 @@ export default function Header() {
 
           {/* Logo centrado */}
           <Link href="/" className="absolute left-1/2 transform -translate-x-1/2">
-            <img src="/LogoBlack.png" alt="Logo Balanced+" className="h-12" />
+            <img src="/LogoBlack.png" alt="Logo Balanced+" className="h-10 md:h-12" />
           </Link>
 
           {/* Nav derecha */}
@@ -79,9 +101,7 @@ export default function Header() {
                 animate="visible"
                 exit="hidden"
                 variants={{
-                  visible: {
-                    transition: { staggerChildren: 0.05, delayChildren: 0.2 }
-                  },
+                  visible: { transition: { staggerChildren: 0.05, delayChildren: 0.2 } },
                 }}
               >
                 {[...leftLinks, ...rightLinks].map((link, idx) => (
@@ -105,11 +125,10 @@ export default function Header() {
             </motion.div>
           )}
         </AnimatePresence>
-
-      </header>
+      </motion.header>
 
       {/* Espaciador fijo */}
-      <div className="h-12" />
+      <div className="h-12 md:h-12" />
     </>
   );
 }
