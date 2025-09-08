@@ -9,7 +9,8 @@ import {
   signOut,
   onAuthStateChanged,
   updateProfile, 
-  sendEmailVerification
+  sendEmailVerification,
+  fetchSignInMethodsForEmail,
 } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 
@@ -23,6 +24,7 @@ export default function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isVerified, setIsVerified] = useState(false);
+  
 
   // Función para garantizar la existencia del doc user en Firestore
   async function ensureUserDoc(firebaseUser) {
@@ -49,24 +51,28 @@ export default function AuthProvider({ children }) {
   }
 
     useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (fbUser) => {
+        const unsub = onAuthStateChanged(auth, async (fbUser) => {
 
-        if (fbUser) {
-        await fbUser.reload(); // Asegura estado actualizado    
-        await ensureUserDoc(fbUser);
-        setUser({
-            uid: fbUser.uid,
-            email: fbUser.email,
-            displayName: fbUser.displayName,
-            photoURL: fbUser.photoURL,
+            if (fbUser) {
+                await fbUser.reload(); // Asegura estado actualizado    
+                const docRef =  doc(db, "users", fbUser.uid);
+                const snap = await getDoc(docRef);
+                if (!snap.exists()) {
+                    await ensureUserDoc(fbUser);
+                }
+                setUser({
+                    uid: fbUser.uid,
+                    email: fbUser.email,
+                    displayName: fbUser.displayName,
+                    photoURL: fbUser.photoURL,
+            });
+            setIsVerified(fbUser.emailVerified);
+
+            } else {
+            setUser(null);
+            }
+            setLoading(false);
         });
-        setIsVerified(fbUser.emailVerified);
-
-        } else {
-        setUser(null);
-        }
-        setLoading(false);
-    });
 
     return () => unsub();
     }, []);
@@ -92,9 +98,18 @@ export default function AuthProvider({ children }) {
 
   // Operaciones expuestas
  async function register({ email, password, name, surname, birthDate, gender, phoneNumber, zipCode }) {
+
+    const methods = await fetchSignInMethodsForEmail(auth, email);
+        if (methods.length > 0) {
+        throw new Error("El correo electrónico ya está en uso.");
+        }
+
+
+  console.log("[REGISTER] Intentando registrar usuario:", email);
   // Crear en Firebase Auth
   const uc = await createUserWithEmailAndPassword(auth, email, password);
 
+  console.log("[REGISTER] Usuario creado en Auth:", uc.user.uid);
   //  Actualizar displayName
   const displayName = `${name} ${surname}`;
   await updateProfile(uc.user, { displayName });
@@ -116,8 +131,9 @@ export default function AuthProvider({ children }) {
     classesLeftThisPeriod: { barre: 0, funcional: 0, pilates: 0, yoga: 0 },
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
-  }, { merge: true });
+  }, { merge: false });
 
+  console.log("[REGISTER] Doc de Firestore creado para:", uc.user.uid);
   await sendEmailVerification(uc.user);
 
   return uc;

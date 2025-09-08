@@ -24,6 +24,7 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [registered, setRegistered] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -31,6 +32,7 @@ export default function RegisterPage() {
   };
 
   const handleSubmit = async (e) => {
+
     e.preventDefault();
 
     console.log("handleSubmit llamado", form.email, new Date().toISOString());
@@ -54,12 +56,15 @@ export default function RegisterPage() {
       return;
     }
 
+    setSubmitting(true);
     try {
       await register(form);
       setRegistered(true);
     } catch (err) {
       console.error(err);
       setError(getErrorMessage(err));
+    } finally {
+      setSubmitting(false);
     }
   };
 

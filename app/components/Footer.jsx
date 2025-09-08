@@ -21,7 +21,7 @@ export default function Footer() {
               <span>+34 678 52 81 65</span>
             </a>
           </div>
-          <p>✉️ contacto@balancedplus.es</p>
+          <p>✉️ info@balancedplus.es</p>
         </div>
 
       </div>
