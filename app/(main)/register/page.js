@@ -38,7 +38,6 @@ export default function RegisterPage() {
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const phoneRegex = /^(6|7|8|9)\d{8}$/;
-    const zipRegex = /^(0[1-9]|[1-4][0-9]|5[0-2])\d{3}$/;
 
     if (!emailRegex.test(form.email)) {
       setError("El correo electrónico no es válido.");
@@ -47,11 +46,6 @@ export default function RegisterPage() {
 
     if (!phoneRegex.test(form.phoneNumber)) {
       setError("El número de teléfono no es válido.");
-      return;
-    }
-
-    if (!zipRegex.test(form.zipCode)) {
-      setError("El código postal no es válido.");
       return;
     }
 
@@ -91,6 +85,9 @@ export default function RegisterPage() {
         </p>
         <p className="mt-2 mb-6" style={{ color: "rgb(173, 173, 174)" }}>
           Por favor, verifica tu cuenta antes de poder acceder a tu perfil y reservas.
+        </p>
+        <p className="mt-2 mb-6" style={{ color: "rgb(173, 173, 174)" }}>
+          Si no recibiste el correo, revisa tu carpeta de spam o haz clic en el botón de abajo para reenviarlo.
         </p>
         <button
           onClick={handleResend}
@@ -207,11 +204,10 @@ export default function RegisterPage() {
           <input
             type="text"
             name="zipCode"
-            placeholder="* Código postal" 
+            placeholder="Código postal" 
             value={form.zipCode}
             onChange={handleChange}
             className={floatClass + " flex-1"}
-            required
           />
         </div>
 

@@ -93,9 +93,7 @@ export default function AuthProvider({ children }) {
   // Operaciones expuestas
  async function register({ email, password, name, surname, birthDate, gender, phoneNumber, zipCode }) {
   // Crear en Firebase Auth
-  console.log("🔥 register llamado con:", email, new Date().toISOString());
   const uc = await createUserWithEmailAndPassword(auth, email, password);
-  console.log("✅ usuario creado:", uc.user.uid);
 
   //  Actualizar displayName
   const displayName = `${name} ${surname}`;

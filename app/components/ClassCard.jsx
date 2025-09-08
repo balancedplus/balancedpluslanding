@@ -6,12 +6,14 @@ import { useAuth } from "./AuthProvider";
 import { makeReservation, cancelReservation } from "../../lib/reservations";
 import { useState } from "react";
 import { useToast } from "./ToastProvider";
+import { useRouter } from "next/navigation";
 
 export default function ClassCard({ cls, userReservations = [] }) {
 
   const { user, isVerified } = useAuth();
   const [loading, setLoading] = useState(false);
   const { showSuccess, showError, showInfo } = useToast();
+  const router = useRouter();
 
 
   // Crear set de días ya reservados
@@ -40,7 +42,14 @@ export default function ClassCard({ cls, userReservations = [] }) {
     );
 
     const handleClick = async () => {
-    if (!user || !isVerified) return showError("Debes iniciar sesión y verificar tu correo para reservar");
+            if (!user) {
+                router.push("/login");
+                    return;
+                }
+                if (!isVerified) {
+                    showError("Debes verificar tu correo para reservar");
+                return;
+            }
     
     setLoading(true);
 
@@ -98,7 +107,7 @@ export default function ClassCard({ cls, userReservations = [] }) {
 
         <button
             onClick={handleClick}
-            disabled={!user || capacityLeft === 0}
+            disabled={capacityLeft === 0}
             className="mt-3 rounded-md py-2 font-medium transition"
             style={{ backgroundColor: "#fff", color: "rgb(173, 173, 174)" }}
             >
