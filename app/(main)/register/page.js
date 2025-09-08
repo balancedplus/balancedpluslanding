@@ -4,8 +4,12 @@ import { useState } from "react";
 import { useAuth } from "../../components/AuthProvider";
 import { getErrorMessage } from "@/lib/utils/getErrorMessage";
 import { useToast } from "../../components/ToastProvider";
+import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
+
+   const router = useRouter();
+    
   const { register, resendVerificationEmail } = useAuth();
   const { showInfo } = useToast();
   
@@ -58,7 +62,7 @@ export default function RegisterPage() {
     setSubmitting(true);
     try {
       await register(form);
-      setRegistered(true);
+      router.push("/miPerfil")
     } catch (err) {
       console.error(err);
       setError(getErrorMessage(err));
@@ -80,6 +84,7 @@ export default function RegisterPage() {
     }
   };
 
+  /*
   if (registered) {
     return (
       <div className="w-full max-w-md mx-auto py-12 px-4 flex flex-col items-center text-center">
@@ -103,7 +108,7 @@ export default function RegisterPage() {
         </button>
       </div>
     );
-  }
+  }*/
 
   // Clase para inputs con borde fino y efecto de levantar
   const floatClass =
