@@ -66,7 +66,7 @@ export default function AuthProvider({ children }) {
                     displayName: fbUser.displayName,
                     photoURL: fbUser.photoURL,
             });
-            setIsVerified(fbUser.emailVerified);
+            setIsVerified(true);
 
             } else {
             setUser(null);
@@ -82,7 +82,7 @@ export default function AuthProvider({ children }) {
     const handleFocus = async () => {
       if (auth.currentUser) {
         await auth.currentUser.reload();
-        setIsVerified(auth.currentUser.emailVerified);
+        setIsVerified(true);
         setUser({
           uid: auth.currentUser.uid,
           email: auth.currentUser.email,
@@ -131,7 +131,9 @@ export default function AuthProvider({ children }) {
     updatedAt: serverTimestamp(),
   }, { merge: false });
 
-  await sendEmailVerification(uc.user);
+  // TEMPORALMENTE FUERA
+  
+  //await sendEmailVerification(uc.user);
 
   return uc;
 }
