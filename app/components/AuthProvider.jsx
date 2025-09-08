@@ -105,11 +105,9 @@ export default function AuthProvider({ children }) {
         }
 
 
-  console.log("[REGISTER] Intentando registrar usuario:", email);
   // Crear en Firebase Auth
   const uc = await createUserWithEmailAndPassword(auth, email, password);
 
-  console.log("[REGISTER] Usuario creado en Auth:", uc.user.uid);
   //  Actualizar displayName
   const displayName = `${name} ${surname}`;
   await updateProfile(uc.user, { displayName });
@@ -133,7 +131,6 @@ export default function AuthProvider({ children }) {
     updatedAt: serverTimestamp(),
   }, { merge: false });
 
-  console.log("[REGISTER] Doc de Firestore creado para:", uc.user.uid);
   await sendEmailVerification(uc.user);
 
   return uc;
