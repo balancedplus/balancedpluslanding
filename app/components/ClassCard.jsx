@@ -107,7 +107,7 @@ export default function ClassCard({ cls, userReservations = [] }) {
 
         <button
             onClick={handleClick}
-            disabled={capacityLeft === 0}
+            disabled={capacityLeft === 0 && !myReservation}
             className="mt-3 rounded-md py-2 font-medium transition"
             style={{ backgroundColor: "#fff", color: "rgb(173, 173, 174)" }}
             >
@@ -118,7 +118,7 @@ export default function ClassCard({ cls, userReservations = [] }) {
             : myReservation
             ? "Cancelar reserva"
             : capacityLeft === 0
-            ? "Agotado"
+            ? "Clase Completa"
             : "Reservar"}
         </button>
     </div>
