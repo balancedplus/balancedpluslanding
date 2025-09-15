@@ -1,0 +1,34 @@
+// firestore.rules
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // USERS
+    match /users/{userId} {
+      // Un usuario puede leer y editar solo su propio doc, O los admins pueden leer cualquier doc
+      allow read, update, delete: if (request.auth != null && request.auth.uid == userId) || (request.auth != null && request.auth.token.admin == true);
+      // Cualquiera logueado puede crear su propio doc (si no existe aún)
+      allow create: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // CLASSES
+    match /classes/{classId} {
+      // Todos los usuarios autenticados pueden leer las clases disponibles
+      allow read: if true;
+      // Solo admins podrán crear/editar clases
+      allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // RESERVATIONS
+    match /reservations/{reservationId} {
+      // Un usuario puede leer su propia reserva, O los admins pueden leer cualquier reserva
+      allow read: if (request.auth != null && request.auth.uid == resource.data.userId) || (request.auth != null && request.auth.token.admin == true);
+
+      // Crear reserva: userId del body debe ser el mismo que el auth.uid, O ser admin
+      allow create: if (request.auth != null && request.auth.uid == request.resource.data.userId) || (request.auth != null && request.auth.token.admin == true);
+
+      // Cancelar (update/delete): solo el propietario O admin
+      allow update, delete: if (request.auth != null && request.auth.uid == resource.data.userId) || (request.auth != null && request.auth.token.admin == true);
+    }
+  }
+}

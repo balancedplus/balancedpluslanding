@@ -2,6 +2,7 @@
 "use client";
 
 import { useAuth } from "../../components/AuthProvider";
+import { getUserReservations } from "../../../lib/reservations";
 import { useEffect, useState } from "react";
 import {
   collection,
@@ -14,6 +15,7 @@ import {
 import { db } from "../../../lib/firebase";
 import ClassCard from "../../components/ClassCard";
 import Link from "next/link";
+import { subscribeUserReservations } from "../../../lib/reservations";
 
 export default function MisReservasPage() {
   const { user, isVerified } = useAuth();
@@ -25,21 +27,10 @@ export default function MisReservasPage() {
 
     setLoadingPage(true);
 
-    const q = query(
-      collection(db, "reservations"),
-      where("userId", "==", user.uid),
-      where("status", "==", "active")
-    );
-
-    const unsubscribe = onSnapshot(
-      q,
-      async (snapshot) => {
+    const unsubscribe = subscribeUserReservations(
+      user.uid,
+      async (reservations) => {
         const now = new Date();
-        const reservations = snapshot.docs.map((d) => ({
-          id: d.id,
-          ...d.data(),
-        }));
-
         const classPromises = reservations.map(async (r) => {
           try {
             const clsSnap = await getDoc(doc(db, "classes", r.classId));
@@ -56,7 +47,6 @@ export default function MisReservasPage() {
         });
 
         const resolved = (await Promise.all(classPromises)).filter(Boolean);
-
         resolved.sort((a, b) => {
           const da = a.dateTime?.toDate?.() ?? new Date(a.dateTime);
           const dbt = b.dateTime?.toDate?.() ?? new Date(b.dateTime);
@@ -67,7 +57,7 @@ export default function MisReservasPage() {
         setLoadingPage(false);
       },
       (err) => {
-        console.error("❌ Error en snapshot reservas:", err);
+        console.error("Error escuchando reservas:", err);
         setLoadingPage(false);
       }
     );
