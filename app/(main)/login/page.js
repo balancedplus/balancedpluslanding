@@ -6,7 +6,7 @@ import { useAuth } from "../../components/AuthProvider";
 import { getErrorMessage } from "@/lib/utils/getErrorMessage";
 import Link from "next/link";
 import { getAuth, sendPasswordResetEmail } from "firebase/auth";
-import { Button } from "../../../components/ui/button.jsx";
+import { Button } from "@/components/ui/button";
 // shadcn/ui
 import {
   AlertDialog,
@@ -16,7 +16,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogTrigger,
-} from "../../../components/ui/alert-dialog.jsx";
+} from "@/components/ui/alert-dialog";
 
 
 // Framer Motion
