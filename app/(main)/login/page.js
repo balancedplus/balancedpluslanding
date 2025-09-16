@@ -5,6 +5,22 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../../components/AuthProvider";
 import { getErrorMessage } from "@/lib/utils/getErrorMessage";
 import Link from "next/link";
+import { getAuth, sendPasswordResetEmail } from "firebase/auth";
+import { Button } from "@/components/ui/button";
+// shadcn/ui
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+
+// Framer Motion
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -13,6 +29,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showEmailSent, setShowEmailSent] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,7 +46,24 @@ export default function LoginPage() {
     }
   };
 
-  // Clase para inputs con borde fino y efecto de levantar
+  const handleResetPassword = async () => {
+    if (!email) {
+      setError("Por favor, introduce tu correo electrónico primero.");
+      return;
+    }
+
+    try {
+      const auth = getAuth();
+      await sendPasswordResetEmail(auth, email);
+      setShowConfirmation(false);
+      setShowEmailSent(true);
+      setError("");
+    } catch (err) {
+      console.error("Error reset password:", err.message);
+      setError(getErrorMessage(err));
+    }
+  };
+
   const floatClass =
     "w-full rounded-md p-3 placeholder-gray-400 bg-white border border-gray-300 transition-all duration-300 ease-in-out focus:outline-none focus:shadow-md focus:-translate-y-1";
 
@@ -61,6 +96,7 @@ export default function LoginPage() {
         />
 
         {error && <p className="text-sm text-center text-red-500">{error}</p>}
+        {success && <p className="text-sm text-center text-green-500">{success}</p>}
 
         <button
           type="submit"
@@ -77,6 +113,72 @@ export default function LoginPage() {
           Regístrate aquí
         </Link>
       </p>
+
+      {/* AlertDialog de shadcn para confirmar envío */}
+      <AlertDialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+        <AlertDialogTrigger asChild>
+          <button
+            className="mt-4 underline text-sm"
+            type="button"
+            onClick={() => setShowConfirmation(true)}
+            style={{ color: "rgb(173, 173, 174)" }}
+          >
+            ¿Has olvidado la contraseña?
+          </button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Restablecer contraseña</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se enviará un correo para restablecer tu contraseña. ¿Deseas continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button variant="outline" onClick={() => setShowConfirmation(false)}>
+              Cancelar
+            </Button>
+            <Button
+              style={{ backgroundColor: "#cbc8bf", color: "#fff" }}
+              onClick={handleResetPassword}
+            >
+              Enviar correo
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Modal fade-in/fade-out usando Framer Motion */}
+      <AnimatePresence>
+        {showEmailSent && (
+          <motion.div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="bg-white rounded-xl p-8 max-w-sm text-center shadow-lg"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <h2 className="text-xl font-semibold mb-4" style={{ color: "rgb(173, 173, 174)" }}>
+                Correo enviado
+              </h2>
+              <p className="mb-6" style={{ color: "rgb(173, 173, 174)" }}>
+                Revisa tu bandeja de entrada y sigue las instrucciones para restablecer tu contraseña.
+              </p>
+              <Button
+                style={{ backgroundColor: "#cbc8bf", color: "#fff" }}
+                onClick={() => setShowEmailSent(false)}
+              >
+                Volver al login
+              </Button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
