@@ -4,13 +4,11 @@ const admin = require("firebase-admin");
 const Stripe = require("stripe");
 const { defineSecret } = require("firebase-functions/params");
 
-require("dotenv").config();
+//require("dotenv").config();
 
 // Para local -> const stripeSecret = process.env.STRIPE_SECRET;
 const stripeSecret = defineSecret("STRIPE_SECRET");
 const webhookSecret = defineSecret("STRIPE_WEBHOOK_SECRET");
-
-const stripe = new Stripe(stripeSecret);
 
 const db = admin.firestore();
 
