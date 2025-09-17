@@ -59,8 +59,8 @@ exports.createCheckoutSession = functions.https.onCall({
     let sessionParams = {
       payment_method_types: ["card"],
       customer: customerId,
-      success_url: "http://localhost:3000/stripeSuccess",
-      cancel_url: "http://localhost:3000/stripeCancel",
+      success_url: "http://balancedplus.es/stripeSuccess",
+      cancel_url: "http://balancedplus.es/stripeCancel",
     };
 
     if (mode === "subscription") {
