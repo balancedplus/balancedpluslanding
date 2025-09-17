@@ -5,8 +5,6 @@ import { useAuth } from "../../components/AuthProvider";
 import { getErrorMessage } from "@/lib/utils/getErrorMessage";
 import { useToast } from "../../components/ToastProvider";
 import { useRouter } from "next/navigation";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
 
 export default function RegisterPage() {
 

@@ -8,7 +8,6 @@ import ClassCard from "../../components/ClassCard";
 import { db } from "../../../lib/firebase";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import DateSelect from "../../components/DateSelect";
-import { subscribeUserReservations } from "../../../lib/reservations";
 
 export default function ReservasPage() {
   const { user, isVerified } = useAuth();
@@ -56,15 +55,25 @@ export default function ReservasPage() {
       return;
     }
 
-    const unsubscribe = subscribeUserReservations(
-     user.uid,
-     (reservations) => setUserReservations(reservations),
-     (err) => {
-       console.error("Error escuchando reservas:", err);
-       setUserReservations([]);
-     }
-   );
-    
+    const q = query(
+      collection(db, "reservations"),
+      where("userId", "==", user.uid),
+      where("status", "==", "active")
+    );
+
+    const unsubscribe = onSnapshot(q, 
+      (snapshot) => {
+        const reservations = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setUserReservations(reservations);
+      }, 
+      (error) => {
+        console.error(error);
+        getUserReservations(user.uid).then(res => setUserReservations(res));
+      }
+    );
 
     return () => unsubscribe();
   }, [user]);
@@ -82,15 +91,8 @@ export default function ReservasPage() {
 
   // Filtrado por tipo de clase (usar value en minúscula)
   const filteredClasses = useMemo(() => {
-    let list = classes;
-
-    if (filter !== "todas") {
-      list = list.filter(c => c.type === filter)
-    }
-    
-    list = list.filter(c => c.status !== "closed");
-
-    return list;
+    if (filter === "todas") return classes;
+    return classes.filter(c => c.type === filter);
   }, [classes, filter]);
 
   return (
