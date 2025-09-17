@@ -2,14 +2,20 @@ import admin from "firebase-admin";
 import { onRequest } from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import Stripe from "stripe";
+import { defineSecret } from "firebase-functions/params";
 
 const db = admin.firestore();
 
 /**
  * Webhook de Stripe para manejar eventos de suscripciones y pagos
  */
-export const stripeWebhook = onRequest(async (request, response) => {
-  const stripe = new Stripe(process.env.STRIPE_SECRET || "", {
+const stripeSecret = defineSecret("STRIPE_SECRET");
+const webhookSecret = defineSecret("STRIPE_WEBHOOK_SECRET");
+
+export const stripeWebhook = onRequest({
+  secrets: [stripeSecret, webhookSecret]
+}, async (request, response) => {
+  const stripe = new Stripe(stripeSecret.value(), {
     apiVersion: "2025-01-27.acacia",
   });
 
@@ -24,7 +30,7 @@ export const stripeWebhook = onRequest(async (request, response) => {
     event = stripe.webhooks.constructEvent(
       request.rawBody,
       sig,
-      process.env.STRIPE_WEBHOOK_SECRET || ""
+      webhookSecret.value()
     );
   } catch (err) {
     logger.error("Webhook signature verification failed:", err);

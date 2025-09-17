@@ -28,7 +28,7 @@ const PlanSection = ({ title, plans }) => {
       planPrice: currentPlan?.price || 0
     });
     
-    const stripe = await loadStripe("pk_test_51RiAZTR08xpq02eX3c3NaE9HwRGkMtaVCfVhPd5qOEBJOwZDcJWCb3Hexh09oUcW6nS8W6i1DCFa51vPULou5DjL00BgjQlNoC");
+    const stripe = await loadStripe("pk_live_51RiAZFJK71CZc9AoVuhx4u00tmq12GISu8FOBAKd93LO379H01xTNh8IvrvTdMOOi52xn1jPprVDif7UUthUv2oh00PJRYVxHz");
     await stripe.redirectToCheckout({ sessionId: data.sessionId });
   } catch (err) {
     console.error(err);
@@ -51,7 +51,7 @@ const handlePurchase = async (stripePriceId, planType, classesCredit) => {
       mode: "payment", 
       classesCredit
     });
-    const stripe = await loadStripe("pk_test_51RiAZTR08xpq02eX3c3NaE9HwRGkMtaVCfVhPd5qOEBJOwZDcJWCb3Hexh09oUcW6nS8W6i1DCFa51vPULou5DjL00BgjQlNoC"); 
+    const stripe = await loadStripe("pk_live_51RiAZFJK71CZc9AoVuhx4u00tmq12GISu8FOBAKd93LO379H01xTNh8IvrvTdMOOi52xn1jPprVDif7UUthUv2oh00PJRYVxHz"); 
     await stripe.redirectToCheckout({ sessionId: data.sessionId });
   } catch (err) {
     console.error(err);

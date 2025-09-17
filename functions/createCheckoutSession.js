@@ -2,27 +2,35 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const Stripe = require("stripe");
+const { defineSecret } = require("firebase-functions/params");
 
 require("dotenv").config();
 
-const stripeSecret = process.env.STRIPE_SECRET;
+// Para local -> const stripeSecret = process.env.STRIPE_SECRET;
+const stripeSecret = defineSecret("STRIPE_SECRET");
+const webhookSecret = defineSecret("STRIPE_WEBHOOK_SECRET");
+
 const stripe = new Stripe(stripeSecret);
 
 const db = admin.firestore();
 
-exports.createCheckoutSession = functions.https.onCall(async (data, context) => {
-  console.log("===== createCheckoutSession called =====");
-  console.log("Raw data received:", data);
+exports.createCheckoutSession = functions.https.onCall({
+    secrets: [stripeSecret, webhookSecret]
+  }, async (data, context) => {
+    const stripe = new Stripe(stripeSecret.value());
+    
+    console.log("===== createCheckoutSession called =====");
+    console.log("Raw data received:", data);
 
-  const { userId, stripePriceId, planType, mode, classesCredit, planPrice } = data.data || data;
-  console.log("Parsed values:", { userId, stripePriceId, planType, mode, classesCredit });
+    const { userId, stripePriceId, planType, mode, classesCredit, planPrice } = data.data || data;
+    console.log("Parsed values:", { userId, stripePriceId, planType, mode, classesCredit });
 
-  if (!userId || !stripePriceId || !mode) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "Faltan datos requeridos"
-    );
-  }
+    if (!userId || !stripePriceId || !mode) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Faltan datos requeridos"
+      );
+    }
 
   // Buscar usuario en Firestore
   const userRef = db.collection("users").doc(userId);
