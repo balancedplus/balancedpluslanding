@@ -11,8 +11,10 @@ import {
   updateProfile, 
   sendEmailVerification,
   fetchSignInMethodsForEmail,
+  signInWithCustomToken,
 } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { getFunctions, httpsCallable } from "firebase/functions";
 
 const AuthContext = createContext();
 
@@ -97,46 +99,44 @@ export default function AuthProvider({ children }) {
   }, []);
 
   // Operaciones expuestas
- async function register({ email, password, name, surname, birthDate, gender, phoneNumber, zipCode }) {
+    async function register(formData) {
 
-    const methods = await fetchSignInMethodsForEmail(auth, email);
-        if (methods.length > 0) {
-        throw new Error("El correo electrónico ya está en uso.");
+        try {
+            const functions = getFunctions();
+            const registerUser = httpsCallable(functions, "registerUser");
+
+            // Llamada al backend
+            const result = await registerUser(formData);
+            const { customToken } = result.data;
+
+            // Login automático con custom token
+            const userCredential = await signInWithCustomToken(auth, customToken);
+
+            const fbUser = userCredential.user;
+
+            // TEMPORALMENTE FUERA (habrá que hacerlo desde back)
+            //await sendEmailVerification(fbUser);
+
+            // Asegurar que el doc de Firestore existe
+            await ensureUserDoc(fbUser);
+
+            // Actualizar estado de usuario en contexto
+            setUser({
+            uid: fbUser.uid,
+            email: fbUser.email,
+            displayName: fbUser.displayName,
+            photoURL: fbUser.photoURL,
+            });
+
+            //setIsVerified(fbUser.emailVerified || false);
+
+            return result.data;
+        } catch (err) {
+            console.error("Error en register (AuthProvider):", err);
+            throw err; // Se maneja luego en el front con getErrorMessage
         }
 
-
-  // Crear en Firebase Auth
-  const uc = await createUserWithEmailAndPassword(auth, email, password);
-
-  //  Actualizar displayName
-  const displayName = `${name} ${surname}`;
-  await updateProfile(uc.user, { displayName });
-
-  //  Crear doc en Firestore con todos los datos
-  const uRef = doc(db, "users", uc.user.uid);
-  await setDoc(uRef, {
-    uid: uc.user.uid,
-    email,
-    displayName,
-    name,
-    surname,
-    birthDate: birthDate ? new Date(birthDate) : null,
-    gender,
-    phoneNumber,
-    zipCode,
-    role: "user",
-    signInProvider: "password",
-    classesLeftThisPeriod: { barre: 0, funcional: 0, pilates: 0, yoga: 0 },
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  }, { merge: false });
-
-  // TEMPORALMENTE FUERA
-  
-  //await sendEmailVerification(uc.user);
-
-  return uc;
-}
+    }
 
 
   async function login({ email, password }) {
