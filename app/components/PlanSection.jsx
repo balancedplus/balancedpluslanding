@@ -1,9 +1,63 @@
 "use client";
 
 import { useState } from "react";
+import { useAuth } from "../components/AuthProvider"; // ajusta la ruta según tu proyecto
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { loadStripe } from "@stripe/stripe-js";
 
 const PlanSection = ({ title, plans }) => {
   const [open, setOpen] = useState(false);
+  const { user } = useAuth(); // <--- aquí traes el user
+
+  // Suscripciones
+  const handleSubscribe = async (stripePriceId, planType) => {
+  if (!user) return alert("Inicia sesión primero");
+
+  const functions = getFunctions();
+  const createCheckoutSession = httpsCallable(functions, "createCheckoutSession");
+
+  try {
+    // Encontrar el plan actual para obtener su precio
+    const currentPlan = plans.find(p => p.stripePriceId === stripePriceId);
+    
+    const { data } = await createCheckoutSession({ 
+      userId: user.uid, 
+      stripePriceId, 
+      planType, 
+      mode: "subscription",
+      planPrice: currentPlan?.price || 0
+    });
+    
+    const stripe = await loadStripe("pk_test_51RiAZTR08xpq02eX3c3NaE9HwRGkMtaVCfVhPd5qOEBJOwZDcJWCb3Hexh09oUcW6nS8W6i1DCFa51vPULou5DjL00BgjQlNoC");
+    await stripe.redirectToCheckout({ sessionId: data.sessionId });
+  } catch (err) {
+    console.error(err);
+    alert("Error creando la sesión de suscripción");
+  }
+};
+
+  // Pagos únicos (packs)
+const handlePurchase = async (stripePriceId, planType, classesCredit) => {
+  if (!user) return alert("Inicia sesión primero");
+
+  const functions = getFunctions();
+  const createCheckoutSession = httpsCallable(functions, "createCheckoutSession");
+
+  try { 
+    const { data } = await createCheckoutSession({ 
+      userId: user.uid, 
+      stripePriceId, 
+      planType, 
+      mode: "payment", 
+      classesCredit
+    });
+    const stripe = await loadStripe("pk_test_51RiAZTR08xpq02eX3c3NaE9HwRGkMtaVCfVhPd5qOEBJOwZDcJWCb3Hexh09oUcW6nS8W6i1DCFa51vPULou5DjL00BgjQlNoC"); 
+    await stripe.redirectToCheckout({ sessionId: data.sessionId });
+  } catch (err) {
+    console.error(err);
+    alert("Error creando la sesión de pago único");
+  }
+};
 
   return (
     <div className="w-full max-w-5xl mx-auto mb-12 px-12 sm:px-6 md:px-0">
@@ -36,6 +90,24 @@ const PlanSection = ({ title, plans }) => {
 
               <p className="mt-2 text-sm text-white">{plan.sessionPrice}</p>
               <p className="mb-4 font-thin text-white">Sin permanencia</p>
+
+              {plan.type.includes("session") ? (
+                <button
+                  onClick={() => handlePurchase(plan.stripePriceId, plan.type, plan.classesCredit)}
+                  className="mt-3 rounded-md py-2 font-medium transition w-full"
+                  style={{ backgroundColor: "#fff", color: "rgb(173, 173, 174)" }}
+                >
+                  Comprar
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleSubscribe(plan.stripePriceId, plan.type)}
+                  className="mt-3 rounded-md py-2 font-medium transition w-full"
+                  style={{ backgroundColor: "#fff", color: "rgb(173, 173, 174)" }}
+                >
+                  Suscribirse
+                </button>
+              )}
             </div>
           ))}
         </div>
