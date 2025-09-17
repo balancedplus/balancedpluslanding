@@ -1,8 +1,6 @@
-// app/myReservations/page.jsx
 "use client";
 
 import { useAuth } from "../../components/AuthProvider";
-import { getUserReservations } from "../../../lib/reservations";
 import { useEffect, useState } from "react";
 import {
   collection,
@@ -15,30 +13,37 @@ import {
 import { db } from "../../../lib/firebase";
 import ClassCard from "../../components/ClassCard";
 import Link from "next/link";
-import { subscribeUserReservations } from "../../../lib/reservations";
 
 export default function MisReservasPage() {
   const { user, isVerified } = useAuth();
   const [classesWithReservations, setClassesWithReservations] = useState([]);
   const [loadingPage, setLoadingPage] = useState(true);
-
   useEffect(() => {
     if (!user || !isVerified) return;
 
     setLoadingPage(true);
 
-    const unsubscribe = subscribeUserReservations(
-      user.uid,
-      async (reservations) => {
+    const q = query(
+      collection(db, "reservations"),
+      where("userId", "==", user.uid),
+      where("status", "==", "active")
+    );
+
+    const unsubscribe = onSnapshot(
+      q,
+      async (snapshot) => {
         const now = new Date();
+        const reservations = snapshot.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
+        }));
+
         const classPromises = reservations.map(async (r) => {
           try {
             const clsSnap = await getDoc(doc(db, "classes", r.classId));
             if (!clsSnap.exists()) return null;
-
             const cls = { id: clsSnap.id, ...clsSnap.data(), myReservation: r };
             const classDate = cls.dateTime?.toDate?.() ?? new Date(cls.dateTime);
-
             return classDate >= now ? cls : null;
           } catch (err) {
             console.error("Error cargando clase:", err);
@@ -47,24 +52,22 @@ export default function MisReservasPage() {
         });
 
         const resolved = (await Promise.all(classPromises)).filter(Boolean);
+
         resolved.sort((a, b) => {
           const da = a.dateTime?.toDate?.() ?? new Date(a.dateTime);
           const dbt = b.dateTime?.toDate?.() ?? new Date(b.dateTime);
           return da - dbt;
         });
-
         setClassesWithReservations(resolved);
         setLoadingPage(false);
       },
       (err) => {
-        console.error("Error escuchando reservas:", err);
+        console.error("❌ Error en snapshot reservas:", err);
         setLoadingPage(false);
       }
     );
-
     return () => unsubscribe();
   }, [user]);
-
   // 👉 Agrupar clases por día
   const groupedByDay = classesWithReservations.reduce((acc, cls) => {
     const date = cls.dateTime?.toDate?.() ?? new Date(cls.dateTime);
@@ -73,12 +76,10 @@ export default function MisReservasPage() {
       day: "numeric",
       month: "long",
     });
-
     if (!acc[dayLabel]) acc[dayLabel] = [];
     acc[dayLabel].push(cls);
     return acc;
   }, {});
-
   return (
     <div className="w-full max-w-6xl mx-auto py-10 px-4 sm:px-6 md:px-0 flex flex-col">
       <h1
@@ -90,7 +91,6 @@ export default function MisReservasPage() {
       <p className="text-center mb-8" style={{ color: "rgb(173, 173, 174)" }}>
         Aquí puedes ver y gestionar tus próximas clases.
       </p>
-
       {loadingPage ? (
         <p className="text-center text-[rgb(173,173,174)]">
           Cargando tus reservas...
@@ -109,7 +109,6 @@ export default function MisReservasPage() {
             </button>
           </Link>
         </div>
-
       ) : (
         <div className="space-y-10">
           {Object.entries(groupedByDay).map(([day, dayClasses], index, arr) => (
