@@ -1,8 +1,8 @@
-import admin from "firebase-admin";
-import { onRequest } from "firebase-functions/v2/https";
-import * as logger from "firebase-functions/logger";
-import Stripe from "stripe";
-import { defineSecret } from "firebase-functions/params";
+const admin = require("firebase-admin");
+const { onRequest } = require("firebase-functions/v2/https");
+const logger = require("firebase-functions/logger");
+const Stripe = require("stripe");
+const { defineSecret } = require("firebase-functions/params");
 
 const db = admin.firestore();
 
@@ -12,7 +12,7 @@ const db = admin.firestore();
 const stripeSecret = defineSecret("STRIPE_SECRET");
 const webhookSecret = defineSecret("STRIPE_WEBHOOK_SECRET");
 
-export const stripeWebhook = onRequest({
+exports.stripeWebhook = onRequest({
   secrets: [stripeSecret, webhookSecret]
 }, async (request, response) => {
   const stripe = new Stripe(stripeSecret.value(), {
