@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "balancedplus"
+    "default": "balancedplus",
+    "staging": "balancedplus-staging"
   }
 }
