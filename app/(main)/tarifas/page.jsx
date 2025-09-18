@@ -38,7 +38,7 @@ export default function TarifasPage() {
 
   return (
     <div className="w-full max-w-6xl mx-auto py-10 px-4 sm:px-6 md:px-0 flex flex-col items-center">
-      <h1 className="text-3xl text-center" style={{ color: 'rgb(173, 173, 174)' }}>Mensualidades</h1>
+      <h1 className="text-3xl text-center" style={{ color: 'rgb(173, 173, 174)' }}>Elige tu plan</h1>
       <p className="text-center mt-2 mb-20"
         style={{ color: 'rgb(173, 173, 174)' }}>
         Elige una suscripción mensual sin permanencia y a un excelente precio por sesión.
