@@ -50,7 +50,7 @@ export const classPlans = [
   {
     title: "Clases Combinadas e Ilimitadas",
     plans: [
-      { title: "Clases Combinadas + Sesiones Ilimitadas", price: "100", type: "combinadas_ilimitadas" },
+      { title: "Clases Combinadas + Sesiones Ilimitadas", price: "140", type: "combinadas_ilimitadas" },
     ],
   },
 ];
