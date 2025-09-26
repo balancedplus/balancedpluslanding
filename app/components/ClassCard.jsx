@@ -59,7 +59,7 @@ export default function ClassCard({ cls, userReservations = [] }) {
         const clsDateStr = clsDate.toISOString().split("T")[0];
 
         if (!myReservation && reservedDays.has(clsDateStr)) {
-            showInfo("Durante el periodo de puertas abiertas solo se permite una clase por día.");
+            showInfo("Solo se permite una clase por día.");
             setLoading(false);
             return;
         }
@@ -79,13 +79,13 @@ export default function ClassCard({ cls, userReservations = [] }) {
       if (err.message.includes("No quedan plazas")) {
         showError("Lo sentimos, no quedan plazas disponibles");
       } else if (err.message.includes("No te quedan clases")) {
-        showError("Has agotado tus clases disponibles de este tipo");
+        showError("No tienes clases disponibles de este tipo");
       } else if (err.message.includes("menos de 2 horas")) {
         showError("No puedes cancelar con menos de 2 horas de antelación");
       } else if (err.message.includes("ya ha sido cancelada")) {
         showInfo("Esta reserva ya había sido cancelada");
       } else if (err.message.includes("Solo se permite una clase")) {
-        showInfo("Durante el periodo puertas abiertas solo puedes reservar una clase al día");
+        showInfo("Solo puedes reservar una clase al día");
       } else {
         showError(err.message || "Ha ocurrido un error inesperado");
       }
