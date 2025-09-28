@@ -240,7 +240,27 @@ exports.stripeWebhook = onRequest({
 
         if (userSnap.empty) {
           logger.warn(`No se encontró usuario para Stripe customer ${stripeCustomerId}`);
-          break;
+          
+          // FALLBACK: Buscar por userId en metadata
+          const userId = subscription.metadata?.userId;
+          if (userId) {
+            logger.info(`Intentando recuperar usuario por userId: ${userId}`);
+            const userDocById = await db.collection("users").doc(userId).get();
+            
+            if (userDocById.exists) {
+              // Usar este usuario y actualizar su stripeCustomerId
+              userDoc = userDocById;
+              userRef = userDocById.ref;
+              await userRef.update({ stripeCustomerId: stripeCustomerId });
+              logger.info(`Usuario recuperado y stripeCustomerId actualizado: ${userId}`);
+            } else {
+              logger.error(`Usuario no encontrado ni por customerId ni por userId: ${userId}`);
+              break;
+            }
+          } else {
+            logger.error(`No userId en metadata para recuperar usuario`);
+            break;
+          }
         }
 
         const userDoc = userSnap.docs[0];

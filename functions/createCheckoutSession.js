@@ -61,6 +61,7 @@ exports.createCheckoutSession = functions.https.onCall({
       customer: customerId,
       success_url: "http://balancedplus.es/stripeSuccess",
       cancel_url: "http://balancedplus.es/stripeCancel",
+      allow_promotion_codes: true,
     };
 
     if (mode === "subscription") {
