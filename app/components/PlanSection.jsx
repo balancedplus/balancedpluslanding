@@ -8,10 +8,14 @@ import { loadStripe } from "@stripe/stripe-js";
 const PlanSection = ({ title, plans }) => {
   const [open, setOpen] = useState(true);
   const { user } = useAuth(); // <--- aquí traes el user
+  const [isLoading, setIsLoading] = useState(false);
 
   // Suscripciones
   const handleSubscribe = async (stripePriceId, planType) => {
   if (!user) return alert("Inicia sesión primero");
+  if (isLoading) return; // Prevenir múltiples clics
+
+  setIsLoading(true);
 
   const functions = getFunctions();
   const createCheckoutSession = httpsCallable(functions, "createCheckoutSession");
@@ -33,6 +37,8 @@ const PlanSection = ({ title, plans }) => {
   } catch (err) {
     console.error(err);
     alert("Error creando la sesión de suscripción");
+  } finally {
+    setIsLoading(false);
   }
 };
 
@@ -102,10 +108,11 @@ const handlePurchase = async (stripePriceId, planType, classesCredit) => {
               ) : (
                 <button
                   onClick={() => handleSubscribe(plan.stripePriceId, plan.type)}
-                  className="mt-3 rounded-md py-2 font-medium transition w-full"
+                  disabled={isLoading}
+                  className="mt-3 rounded-md py-2 font-medium transition w-full disabled:opacity-50"
                   style={{ backgroundColor: "#fff", color: "rgb(173, 173, 174)" }}
                 >
-                  Suscribirse
+                  {isLoading ? "Cargando..." : "Suscribirse"}
                 </button>
               )}
             </div>
