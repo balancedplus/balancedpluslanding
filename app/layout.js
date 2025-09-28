@@ -3,6 +3,7 @@ import Header from './components/Header'
 import Footer from './components/Footer'
 import AuthProvider from './components/AuthProvider'
 import { ToastProvider } from './components/ToastProvider'
+import WeatherAlertBanner from './components/WeatherAlertBanner'
 
 export const metadata = {
   title: 'Balanced+',
@@ -19,6 +20,7 @@ export default function RootLayout({ children }) {
       <body>
         <AuthProvider>
           <ToastProvider>
+            <WeatherAlertBanner />
             <Header />
             <main className="min-h-screen">{children}</main>
             <Footer/ >
