@@ -198,7 +198,7 @@ export default function MiPerfil() {
             <div className="text-center">
               <p className="text-white mb-4">No tienes un plan activo</p>
               <Link
-                href="/suscripciones"
+                href="/tarifas"
                 className="px-4 py-2 rounded-md transition inline-block"
                 style={{ backgroundColor: '#fff', color: 'rgb(173, 173, 174)' }}
               >
