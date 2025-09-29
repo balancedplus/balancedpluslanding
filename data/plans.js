@@ -34,6 +34,11 @@ export const classPlans = [
   {
     title: "Clases Combinadas",
     plans: [
+
+      { title: "4 Funcional + 4 Barre", price: "80", sessionPrice: "10€ por sesión", type: "funcional_barre_4_4" },
+      { title: "8 Funcional + 4 Barre", price: "95", sessionPrice: "7.92€ por sesión", type: "funcional_barre_8_4" },
+      { title: "8 Barre + 4 Funcional", price: "105", sessionPrice: "8.75€ por sesión", type: "barre_funcional_8_4" },
+
       { title: "4 Funcional + 4 Pilates", price: "85", sessionPrice: "10.6€ por sesión", type: "funcional_pilates_4_4" },
       { title: "8 Funcional + 4 Pilates", price: "100", sessionPrice: "8.33€ por sesión", type: "funcional_pilates_8_4" },
       { title: "8 Pilates + 4 Funcional", price: "110", sessionPrice: "9.16€ por sesión", type: "pilates_funcional_8_4" },
