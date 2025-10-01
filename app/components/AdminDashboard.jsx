@@ -207,8 +207,9 @@ const processUserFixedReservations = async (user) => {
   setProcessingUser(user.id);
   
   try {
-    const startDate = new Date('2025-09-29');
+    const startDate = new Date();
     const endDate = new Date('2025-10-31');
+    endDate.setHours(23, 59, 59, 999);
     
     let successful = 0;
     let failed = 0;
@@ -222,6 +223,13 @@ const processUserFixedReservations = async (user) => {
     // Procesar cada día del período
     const currentDate = new Date(startDate);
     while (currentDate <= endDate) {
+
+        if (currentDate.getMonth() === 9 && currentDate.getDate() === 9) {
+          console.log('⏭️ Saltando 9 de octubre (festivo regional)');
+          currentDate.setDate(currentDate.getDate() + 1);
+          continue;
+        }
+
       const dayOfWeek = currentDate.getDay();
       
       const scheduledClasses = user.subscription.fixedSchedule.filter(
@@ -238,6 +246,11 @@ const processUserFixedReservations = async (user) => {
           // Buscar clase que coincida
           const matchingClass = classes.find(c => {
             const classDate = c.dateTime?.toDate ? c.dateTime.toDate() : new Date(c.dateTime);
+
+            if (classDate <= new Date()) {
+              console.log('⚠️ Clase ya pasó, saltando');
+              return false;
+            }
             
             // Comparar fecha (año, mes, día)
             const isSameDay = classDate.getFullYear() === currentDate.getFullYear() &&
