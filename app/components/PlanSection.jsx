@@ -79,7 +79,7 @@ const handlePurchase = async (stripePriceId, planType, classesCredit) => {
       {/* Grid de planes con animación */}
       <div
         className={`overflow-hidden transition-all duration-500 ease-in-out ${
-          open ? "max-h-[4200px] opacity-100 mt-6" : "max-h-0 opacity-0"
+          open ? "max-h-[5200px] opacity-100 mt-6" : "max-h-0 opacity-0"
         }`}
       >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-16 md:gap-y-6">
