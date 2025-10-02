@@ -89,11 +89,19 @@ export default function ReservasPage() {
   );
 }, [userReservations]);
 
-  // Filtrado por tipo de clase (usar value en minúscula)
-  const filteredClasses = useMemo(() => {
-    if (filter === "todas") return classes;
-    return classes.filter(c => c.type === filter);
-  }, [classes, filter]);
+// Filtrado por tipo de clase Y excluir 9 de octubre
+const filteredClasses = useMemo(() => {
+  let result = filter === "todas" ? classes : classes.filter(c => c.type === filter);
+  
+  // Filtrar clases del 9 de octubre (festivo)
+  result = result.filter(c => {
+    const classDate = c.dateTime?.toDate ? c.dateTime.toDate() : new Date(c.dateTime);
+    const isOct9 = classDate.getMonth() === 9 && classDate.getDate() === 9;
+    return !isOct9;
+  });
+  
+  return result;
+}, [classes, filter]);
 
   return (
     <div className="w-full max-w-6xl mx-auto py-10 px-4 sm:px-6 md:px-0 flex flex-col">
@@ -125,21 +133,30 @@ export default function ReservasPage() {
             </div>
         </div>
 
-      {loading ? (
-        <p className="text-center text-[rgb(173,173,174)]">Cargando clases...</p>
-      ) : filteredClasses.length === 0 ? (
-        <p className="text-center text-[rgb(173,173,174)]">No hay clases disponibles para este filtro.</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {filteredClasses.map((c) => (
-            <ClassCard
-              key={c.id}
-              cls={c}
-              userReservations={userReservations}
-            />
-          ))}
-        </div>
-      )}
+        {loading ? (
+          <p className="text-center text-[rgb(173,173,174)]">Cargando clases...</p>
+        ) : dateStr === "2025-10-09" ? (
+          <div className="text-center py-8">
+            <p className="text-xl font-medium text-[rgb(173,173,174)] mb-2">
+              Centro cerrado - Festivo regional
+            </p>
+            <p className="text-[rgb(173,173,174)]">
+              No hay clases disponibles este día
+            </p>
+          </div>
+        ) : filteredClasses.length === 0 ? (
+          <p className="text-center text-[rgb(173,173,174)]">No hay clases disponibles para este filtro.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {filteredClasses.map((c) => (
+              <ClassCard
+                key={c.id}
+                cls={c}
+                userReservations={userReservations}
+              />
+            ))}
+          </div>
+        )}
     </div>
   );
 }
