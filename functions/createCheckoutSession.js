@@ -65,47 +65,39 @@ exports.createCheckoutSession = functions.https.onCall({
     };
 
     if (mode === "subscription") {
-      // NUEVA LÓGICA: Suscripción con trial + pago inmediato
-      const trialEndDate = Math.floor(new Date("2025-11-01T00:00:00Z").getTime() / 1000); // Noviembre 2025
-      
-      sessionParams.mode = "subscription";
-      
-      // Line items: incluir tanto el pago inmediato como la suscripción
-      sessionParams.line_items = [
-        {
-          price_data: {
-            currency: "eur",
-            product_data: {
-              name: `Pago adelantado - Octubre 2025`,
-              description: "Pago que cubre el mes de octubre"
-            },
-            unit_amount: parseInt(planPrice) * 100, // precio en céntimos
+      // Suscripción mensual con prorrateo al siguiente día 1
+      const now = new Date();
+        const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0);
+        const billingCycleAnchor = Math.floor(nextMonth.getTime() / 1000);
+        
+        sessionParams.mode = "subscription";
+        
+        // Solo un line item: la suscripción con prorrateo
+        sessionParams.line_items = [
+          {
+            price: stripePriceId,
+            quantity: 1,
+          }
+        ];
+
+        sessionParams.subscription_data = {
+          metadata: { 
+            userId, 
+            planType,
           },
-          quantity: 1,
-        },
-        {
-          price: stripePriceId,
-          quantity: 1,
-        }
-      ];
+          billing_cycle_anchor: billingCycleAnchor,
+          proration_behavior: 'create_prorations',
+        };
 
-      sessionParams.subscription_data = {
-        metadata: { 
-          userId, 
-          planType,
-          isSpecialLaunch: "true"
-        },
-        trial_end: trialEndDate,
-      };
+        // Personalizar texto del botón
+        sessionParams.custom_text = {
+          submit: {
+            message: "Suscribirse"
+          }
+        };
 
-      // Personalizar texto del botón
-      sessionParams.custom_text = {
-        submit: {
-          message: "Suscribirse"
-        }
-      };
-
-      console.log("Creating subscription with trial end:", new Date(trialEndDate * 1000));
+        console.log("Creating subscription with billing cycle anchor:", new Date(billingCycleAnchor * 1000));
+        console.log("Proration enabled - first payment will be prorated");
 
     } else {
       // Pago único (pack de clases individuales)
