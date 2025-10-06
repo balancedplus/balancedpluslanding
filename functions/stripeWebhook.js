@@ -93,44 +93,58 @@ exports.stripeWebhook = onRequest({
   });
 }
         const planData = planSnap.docs[0].data();
-        const isSpecialLaunch = subscription.metadata?.isSpecialLaunch === "true";
+         // Obtener datos actuales del usuario para preservar campos existentes
+        const currentUserData = userDoc.data();
 
         // Fechas de la suscripción
-        const startDate = subscription.current_period_start
-          ? admin.firestore.Timestamp.fromDate(new Date(subscription.current_period_start * 1000))
-          : null;
-        const endDate = subscription.current_period_end
-          ? admin.firestore.Timestamp.fromDate(new Date(subscription.current_period_end * 1000))
-          : null;
+        const startDate = new Date(subscription.current_period_start * 1000);
+        const endDate = new Date(subscription.current_period_end * 1000);
 
-        // Para lanzamiento especial, el primer pago es hoy pero cubre octubre 2025
-        const firstPaymentDate = isSpecialLaunch 
-          ? admin.firestore.Timestamp.fromDate(new Date())
-          : startDate;
+        // Calcular si está prorrateado (no empieza el día 1)
+        const isProrated = startDate.getUTCDate() !== 1;
 
-        // Obtener datos actuales del usuario para preservar campos existentes
-        const currentUserData = userDoc.data();
+        // Calcular prorrateo de clases
+        let classesForPeriod = { ...planData.classesIncluded };
+        
+        if (isProrated) {
+          const totalDaysInPeriod = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+          const daysInMonth = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0).getDate();
+          const proportion = totalDaysInPeriod / daysInMonth;
+          
+          // Aplicar proporción a las clases incluidas
+          const proratedClasses = {};
+          Object.entries(planData.classesIncluded || {}).forEach(([type, count]) => {
+            // Redondear hacia arriba para ser generosos con el cliente
+            proratedClasses[type] = Math.ceil(count * proportion);
+          });
+          
+          classesForPeriod = proratedClasses;
+          
+          logger.info(`Prorrateo calculado para ${userId}:`);
+          logger.info(`  - Período: ${totalDaysInPeriod}/${daysInMonth} días (${(proportion * 100).toFixed(1)}%)`);
+          logger.info(`  - Clases originales:`, planData.classesIncluded);
+          logger.info(`  - Clases prorrateadas:`, proratedClasses);
+        }
         
         // Preparar datos de suscripción con valores por defecto
-        const subscriptionData = {
-          stripeSubscriptionId: subscription.id,
-          planType: planType,
-          status: subscription.status,
-          startDate: startDate,
-          endDate: endDate,
-          firstPaymentDate: firstPaymentDate,
-          isProrated: !isSpecialLaunch && (startDate && startDate.toDate().getUTCDate() !== 1),
-          cancelAtPeriodEnd: subscription.cancel_at_period_end || false,
-          type: planData.type || "flex",
-          classesLeftThisPeriod: planData.classesIncluded || {},
-          reservationType: "flex"
-        };
+          const subscriptionData = {
+            stripeSubscriptionId: subscription.id,
+            planType: planType,
+            status: subscription.status,
+            startDate: admin.firestore.Timestamp.fromDate(startDate),
+            endDate: admin.firestore.Timestamp.fromDate(endDate),
+            firstPaymentDate: admin.firestore.Timestamp.fromDate(new Date()),
+            isProrated: isProrated,
+            cancelAtPeriodEnd: subscription.cancel_at_period_end || false,
+            type: planData.type || "flex",
+            classesLeftThisPeriod: classesForPeriod,
+            reservationType: "flex"
+          };
 
         // Actualizar usuario con merge para crear campos que no existen
         await userRef.set({
           ...currentUserData,
           subscription: subscriptionData,
-          // Inicializar campos de clases individuales si no existen (usando la nueva estructura)
           classCredits: currentUserData.classCredits || 0,
           hasClassCredits: currentUserData.hasClassCredits || false,
           classCreditsPacks: currentUserData.classCreditsPacks || [],
@@ -138,6 +152,7 @@ exports.stripeWebhook = onRequest({
         }, { merge: true });
 
         logger.info(`Suscripción creada para usuario ${userId}, plan: ${planType}`);
+        logger.info(`Clases asignadas:`, classesForPeriod);
         break;
       }
 
