@@ -47,7 +47,7 @@ exports.stripeWebhook = onRequest({
       
       // ================= SUSCRIPCIONES =================
       case "customer.subscription.created": {
-    console.log("=== DEBUGGING SUBSCRIPTION CREATED ===");
+          console.log("=== DEBUGGING SUBSCRIPTION CREATED ===");
           console.log("Subscription object:", JSON.stringify(data, null, 2));
           console.log("Metadata:", data.metadata);
           console.log("Items:", data.items.data[0]);
@@ -83,22 +83,28 @@ exports.stripeWebhook = onRequest({
 
 
         if (!planSnap.empty) {
-  console.log(`Plan found:`, planSnap.docs[0].data());
-} else {
-  // Verificar si existen documentos en la collection
-  const allPlans = await db.collection("subscription-plans").limit(5).get();
-  console.log(`Total plans in collection: ${allPlans.size}`);
-  allPlans.docs.forEach(doc => {
-    console.log(`Plan doc: ${doc.id}, type: ${doc.data().type}`);
-  });
-}
+          console.log(`Plan found:`, planSnap.docs[0].data());
+        } else {
+          // Verificar si existen documentos en la collection
+          const allPlans = await db.collection("subscription-plans").limit(5).get();
+          console.log(`Total plans in collection: ${allPlans.size}`);
+          allPlans.docs.forEach(doc => {
+            console.log(`Plan doc: ${doc.id}, type: ${doc.data().type}`);
+          });
+        }
         const planData = planSnap.docs[0].data();
          // Obtener datos actuales del usuario para preservar campos existentes
         const currentUserData = userDoc.data();
 
-        // Fechas de la suscripción
-        const startTimestamp = subscription.current_period_start;
-        const endTimestamp = subscription.current_period_end;
+        const subscriptionItem = subscription.items?.data?.[0];
+
+        if (!subscriptionItem) {
+          logger.error(`No se encontró subscription item en suscripción ${subscription.id}`);
+          break;
+        }
+
+        const startTimestamp = subscriptionItem.current_period_start;
+        const endTimestamp = subscriptionItem.current_period_end;
           
         if (!startTimestamp || !endTimestamp) {
           logger.error(`Timestamps inválidos en suscripción ${subscription.id}`);
