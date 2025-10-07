@@ -97,8 +97,18 @@ exports.stripeWebhook = onRequest({
         const currentUserData = userDoc.data();
 
         // Fechas de la suscripción
-        const startDate = new Date(subscription.current_period_start * 1000);
-        const endDate = new Date(subscription.current_period_end * 1000);
+        const startTimestamp = subscription.current_period_start;
+        const endTimestamp = subscription.current_period_end;
+          
+        if (!startTimestamp || !endTimestamp) {
+          logger.error(`Timestamps inválidos en suscripción ${subscription.id}`);
+          break;
+        }
+
+        // Convertir a Date
+        const startDate = new Date(startTimestamp * 1000);
+        const endDate = new Date(endTimestamp * 1000);
+  
 
         // Calcular si está prorrateado (no empieza el día 1)
         const isProrated = startDate.getUTCDate() !== 1;
@@ -131,9 +141,9 @@ exports.stripeWebhook = onRequest({
             stripeSubscriptionId: subscription.id,
             planType: planType,
             status: subscription.status,
-            startDate: admin.firestore.Timestamp.fromDate(startDate),
-            endDate: admin.firestore.Timestamp.fromDate(endDate),
-            firstPaymentDate: admin.firestore.Timestamp.fromDate(new Date()),
+            startDate: admin.firestore.Timestamp.fromMillis(startTimestamp * 1000),
+            endDate: admin.firestore.Timestamp.fromMillis(endTimestamp * 1000),
+            firstPaymentDate: admin.firestore.Timestamp.now(),
             isProrated: isProrated,
             cancelAtPeriodEnd: subscription.cancel_at_period_end || false,
             type: planData.type || "flex",
