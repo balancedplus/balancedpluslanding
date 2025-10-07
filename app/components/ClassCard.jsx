@@ -19,21 +19,31 @@ import {
 
 export default function ClassCard({ cls, userReservations = [] }) {
   const { user, isVerified } = useAuth();
+
+    console.log('Usuario completo:', user);
+  console.log('Suscripción del usuario:', user?.subscription);
+  console.log('Tipo de plan:', user?.subscription?.type);
+  
   const [loading, setLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [actionType, setActionType] = useState(null); // 'reserve' o 'cancel'
   const { showSuccess, showError, showInfo } = useToast();
   const router = useRouter();
 
+  const isUnlimitedPlan = user?.subscription?.type === 'combinadas_ilimitadas';
+  const maxClassesPerDay = isUnlimitedPlan ? 1 : 2;
+
+
   // Crear set de días ya reservados
-  const reservedDays = useMemo(() => {
-    return new Set(
-      userReservations.map((r) => {
-        const resDate = r.dateTime?.toDate ? r.dateTime.toDate() : new Date(r.dateTime);
-        return resDate.toISOString().split("T")[0];
-      })
-    );
-  }, [userReservations]);
+const reservationsByDay = useMemo(() => {
+  const dayCount = {};
+  userReservations.forEach((r) => {
+    const resDate = r.dateTime?.toDate ? r.dateTime.toDate() : new Date(r.dateTime);
+    const dateStr = resDate.toISOString().split("T")[0];
+    dayCount[dateStr] = (dayCount[dateStr] || 0) + 1;
+  });
+  return dayCount;
+}, [userReservations]);;
 
   const capacity = typeof cls.capacity === "number" ? cls.capacity : null;
   const attendeesCount = Array.isArray(cls.atendees) ? cls.atendees.length : 0;
@@ -83,8 +93,8 @@ export default function ClassCard({ cls, userReservations = [] }) {
       const clsDate = cls.dateTime.toDate ? cls.dateTime.toDate() : new Date(cls.dateTime);
       const clsDateStr = clsDate.toISOString().split("T")[0];
 
-      if (actionType === 'reserve' && reservedDays.has(clsDateStr)) {
-        showInfo("Solo se permite una clase por día.");
+      if (actionType === 'reserve' && (reservationsByDay[clsDateStr] || 0) >= maxClassesPerDay) {
+        showInfo(`Solo se ${maxClassesPerDay === 1 ? 'permite 1 clase' : 'permiten 2 clases'} por día.`);
         setLoading(false);
         return;
       }
@@ -108,6 +118,8 @@ export default function ClassCard({ cls, userReservations = [] }) {
         showError("No puedes cancelar con menos de 2 horas de antelación");
       } else if (err.message.includes("ya ha sido cancelada")) {
         showInfo("Esta reserva ya había sido cancelada");
+      } else if (err.message.includes("Solo se permiten 2 clases")) {
+      showInfo("Solo puedes reservar 2 clases al día");
       } else if (err.message.includes("Solo se permite una clase")) {
         showInfo("Solo puedes reservar una clase al día");
       } else {
