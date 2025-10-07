@@ -59,14 +59,20 @@ export default function AuthProvider({ children }) {
                 await fbUser.reload(); // Asegura estado actualizado    
                 const docRef =  doc(db, "users", fbUser.uid);
                 const snap = await getDoc(docRef);
+
                 if (!snap.exists()) {
                     await ensureUserDoc(fbUser);
                 }
+
+                const updatedSnap = await getDoc(docRef);
+                const firestoreData = updatedSnap.exists() ? updatedSnap.data() : {};
+
                 setUser({
                     uid: fbUser.uid,
                     email: fbUser.email,
                     displayName: fbUser.displayName,
                     photoURL: fbUser.photoURL,
+                    ...firestoreData // incluye datos adicionales de Firestore
             });
             setIsVerified(true);
 
@@ -85,11 +91,17 @@ export default function AuthProvider({ children }) {
       if (auth.currentUser) {
         await auth.currentUser.reload();
         setIsVerified(true);
+
+        const docRef = doc(db, "users", auth.currentUser.uid);
+        const snap = await getDoc(docRef);
+        const firestoreData = snap.exists() ? snap.data() : {};
+
         setUser({
           uid: auth.currentUser.uid,
           email: auth.currentUser.email,
           displayName: auth.currentUser.displayName,
           photoURL: auth.currentUser.photoURL,
+          ...firestoreData // incluye datos adicionales de Firestore
         });
       }
     };
@@ -109,6 +121,7 @@ export default function AuthProvider({ children }) {
 
   // Crear en Firebase Auth
   const uc = await createUserWithEmailAndPassword(auth, email, password);
+  
 
   //  Actualizar displayName
   const displayName = `${name} ${surname}`;
