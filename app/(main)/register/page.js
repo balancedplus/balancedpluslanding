@@ -202,7 +202,7 @@ export default function RegisterPage() {
         {/* Fila Teléfono / Código postal */}
         <div className="flex gap-4">
           <input
-            type="text"
+            type="tel"
             name="phoneNumber"
             placeholder="* Teléfono"
             value={form.phoneNumber}
