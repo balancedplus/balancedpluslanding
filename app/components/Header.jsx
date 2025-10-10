@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from './AuthProvider';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,9 +19,9 @@ export default function Header() {
     const handleScroll = () => {
       const currentScroll = window.scrollY;
       if (currentScroll > lastScroll && currentScroll > 50) {
-        setShowHeader(false); // Scroll hacia abajo -> ocultar
+        setShowHeader(false);
       } else {
-        setShowHeader(true); // Scroll hacia arriba -> mostrar
+        setShowHeader(true);
       }
       setLastScroll(currentScroll);
     };
@@ -46,15 +47,15 @@ export default function Header() {
   return (
     <>
       <motion.header
-        animate={{ y: showHeader ? 0 : -80 }} // Desliza hacia arriba 80px al esconder
+        animate={{ y: showHeader ? 0 : -80 }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
         className="fixed top-0 left-0 w-full z-50 bg-[rgb(244,244,244)] shadow-sm"
       >
         <div className="max-w-6xl mx-auto px-4 py-6 flex items-center justify-between relative">
           {/* Nav izquierda */}
-          <nav className="hidden md:flex space-x-6 text-[rgb(173,173,174)]">
+          <nav className="hidden md:flex space-x-6 text-[rgb(173,173,174)] text-base font-light">
             {leftLinks.map((link, idx) => (
-              <Link key={idx} href={link.href} className="hover:opacity-80 transition-opacity">
+              <Link key={idx} href={link.href} className="hover:opacity-70 transition-opacity">
                 {link.label}
               </Link>
             ))}
@@ -62,13 +63,20 @@ export default function Header() {
 
           {/* Logo centrado */}
           <Link href="/" className="absolute left-1/2 transform -translate-x-1/2">
-            <img src="/LogoBlack.png" alt="Logo Balanced+" className="h-10 md:h-12" />
+            <Image 
+              src="/LogoBlack.png" 
+              alt="Balanced+" 
+              width={120}
+              height={40}
+              className="h-10 md:h-12 w-auto" 
+              priority
+            />
           </Link>
 
           {/* Nav derecha */}
-          <nav className="hidden md:flex space-x-6 text-[rgb(173,173,174)]">
+          <nav className="hidden md:flex space-x-6 text-[rgb(173,173,174)] text-base font-light">
             {rightLinks.map((link, idx) => (
-              <Link key={idx} href={link.href} className="hover:opacity-80 transition-opacity">
+              <Link key={idx} href={link.href} className="hover:opacity-70 transition-opacity">
                 {link.label}
               </Link>
             ))}
@@ -78,7 +86,8 @@ export default function Header() {
           <div className="flex md:hidden ml-auto">
             <button
               onClick={toggleMenu}
-              className="text-2xl text-[rgb(173,173,174)]"
+              className="text-2xl transition-colors"
+              style={{ color: 'rgb(173, 173, 174)' }}
               aria-label="Toggle menu"
             >
               {menuOpen ? '✕' : '☰'}
@@ -86,7 +95,7 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Menú móvil desplegable */}
+        {/* Menú móvil desplegable MEJORADO */}
         <AnimatePresence>
           {menuOpen && (
             <motion.div
@@ -94,41 +103,45 @@ export default function Header() {
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.3, ease: 'easeInOut' }}
-              className="md:hidden bg-[rgb(244,244,244)] w-full px-6 py-6 flex flex-col space-y-3 text-[rgb(173,173,174)] overflow-hidden"
+              className="md:hidden bg-[rgb(244,244,244)] w-full overflow-hidden border-t border-gray-200"
             >
-              <motion.div
-                initial="hidden"
-                animate="visible"
-                exit="hidden"
-                variants={{
-                  visible: { transition: { staggerChildren: 0.05, delayChildren: 0.2 } },
-                }}
-              >
+              <div className="px-6 py-6 flex flex-col space-y-1">
                 {[...leftLinks, ...rightLinks].map((link, idx) => (
                   <motion.div
                     key={idx}
-                    variants={{
-                      hidden: { opacity: 0, y: -10 },
-                      visible: { opacity: 1, y: 0 },
-                    }}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: idx * 0.05 }}
                   >
                     <Link
                       href={link.href}
                       onClick={handleLinkClick}
-                      className="hover:opacity-80 transition-opacity block py-1"
+                      className="block py-3 px-4 rounded-lg font-light text-base transition-all duration-200"
+                      style={{ 
+                        color: 'rgb(173, 173, 174)',
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(203, 200, 191, 0.15)'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
                       {link.label}
                     </Link>
+                    {/* Separador entre links */}
+                    {idx < leftLinks.length + rightLinks.length - 1 && (
+                      <div 
+                        className="h-px my-1 opacity-20" 
+                        style={{ backgroundColor: 'rgb(173, 173, 174)' }}
+                      />
+                    )}
                   </motion.div>
                 ))}
-              </motion.div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
       </motion.header>
 
       {/* Espaciador fijo */}
-      <div className="h-12 md:h-12" />
+      <div className="h-10 md:h-10" />
     </>
   );
 }
