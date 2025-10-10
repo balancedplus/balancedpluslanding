@@ -34,7 +34,46 @@ export default function TarifasPage() {
     }
   });
 
-  if (loading) return <p>Cargando planes...</p>;
+  if (loading) {
+    return (
+      <div className="w-full min-h-screen flex flex-col items-center justify-center px-4">
+        <div className="text-center">
+          {/* Animación de puntos */}
+          <div className="flex gap-2 justify-center mb-6">
+            <div 
+              className="w-2 h-2 rounded-full animate-pulse"
+              style={{ 
+                backgroundColor: 'rgb(173, 173, 174)',
+                animationDelay: '0ms',
+                animationDuration: '1.4s'
+              }}
+            />
+            <div 
+              className="w-2 h-2 rounded-full animate-pulse"
+              style={{ 
+                backgroundColor: 'rgb(173, 173, 174)',
+                animationDelay: '200ms',
+                animationDuration: '1.4s'
+              }}
+            />
+            <div 
+              className="w-2 h-2 rounded-full animate-pulse"
+              style={{ 
+                backgroundColor: 'rgb(173, 173, 174)',
+                animationDelay: '400ms',
+                animationDuration: '1.4s'
+              }}
+            />
+          </div>
+          
+          {/* Texto */}
+          <p className="text-lg font-light" style={{ color: 'rgb(173, 173, 174)' }}>
+            Cargando planes
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-6xl mx-auto py-10 px-4 sm:px-6 md:px-0 flex flex-col items-center">
