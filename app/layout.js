@@ -6,13 +6,13 @@ import CookieBanner from './components/CookieBanner'
 import { ToastProvider } from './components/ToastProvider'
 
 export const metadata = {
-  metadataBase: new URL('https://balancedplus.es'), // Cambia por tu dominio real
+  metadataBase: new URL('https://balancedplus.es'),
   title: {
-    default: 'Balanced+ | Centro de Pilates, Yoga y Entrenamiento en Godella',
+    default: 'Balanced+ | Centro de Pilates Reformer, Barre, Entrenamiento Funcional y Yoga en Godella',
     template: '%s | Balanced+'
   },
-  description: 'Centro de pilates reformer, yoga, entrenamiento funcional y barre en Godella y Campolivar. Clases reducidas con instructores certificados en un espacio amplio con luz natural.',
-  keywords: ['pilates godella', 'yoga godella', 'pilates reformer godella', 'entrenamiento funcional godella', 'barre godella', 'pilates campolivar', 'yoga campolivar', 'gimnasio godella', 'centro deportivo godella', 'clases pilates valencia norte'],
+  description: 'Centro de pilates reformer, barre, entrenamiento funcional y yoga en Godella y Campolivar. Clases reducidas con instructores certificados en un espacio amplio con luz natural.',
+  keywords: ['pilates godella', 'pilates valencia', 'yoga godella', 'pilates reformer godella', 'pilates reformer valencia', 'entrenamiento funcional godella', 'barre godella', 'barre valencia', 'pilates campolivar', 'yoga campolivar', 'gimnasio godella', 'centro deportivo godella', 'clases pilates valencia'],
   authors: [{ name: 'Balanced+' }],
   creator: 'Balanced+',
   publisher: 'Balanced+',
@@ -26,8 +26,8 @@ export const metadata = {
     locale: 'es_ES',
     url: 'https://balancedplus.es',
     siteName: 'Balanced+',
-    title: 'Balanced+ | Centro de Pilates, Yoga y Entrenamiento en Godella',
-    description: 'Centro de pilates reformer, yoga, entrenamiento funcional y barre en Godella y Campolivar. Clases reducidas con instructores certificados.',
+    title: 'Balanced+ | Centro de Pilates Reformer, Barre, Entrenamiento Funcional y Yoga en Godella',
+    description: 'Centro de pilates reformer, barre, entrenamiento funcional y yoga en Godella y Campolivar. Clases reducidas con instructores certificados.',
     images: [
       {
         url: '/og-image.png',
@@ -39,8 +39,8 @@ export const metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Balanced+ | Centro de Pilates, Yoga y Entrenamiento en Godella',
-    description: 'Centro de pilates reformer, yoga, entrenamiento funcional y barre en Godella y Campolivar.',
+    title: 'Balanced+ | Centro de Pilates Reformer, Barre, Entrenamiento Funcional y Yoga en Godella',
+    description: 'Centro de pilates reformer, barre, entrenamiento funcional y yoga en Godella y Campolivar. Clases reducidas con instructores certificados.',
     images: ['/og-image.jpg'],
   },
   robots: {
@@ -78,7 +78,7 @@ export default function RootLayout({ children }) {
               "@context": "https://schema.org",
               "@type": "SportsActivityLocation",
               "name": "Balanced+",
-              "description": "Centro de pilates reformer, yoga, entrenamiento funcional y barre en Godella",
+              "description": "Centro de pilates reformer, barre, entrenamiento funcional y y en Godella",
               "image": "https://balancedplus.es/og-image.png",
               "url": "https://balancedplus.es",
               "telephone": "+34678528165",
