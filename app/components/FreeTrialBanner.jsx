@@ -30,7 +30,7 @@ export default function FreeTrialBanner() {
                 Clase de Prueba Gratuita
               </p>
               <p className="text-white/90 text-sm sm:text-base">
-                Prueba cualquier clase sin compromiso
+                Prueba tu primera clase gratis sin compromiso
               </p>
             </div>
           </div>
