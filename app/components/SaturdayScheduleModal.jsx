@@ -46,13 +46,13 @@ export default function SaturdayScheduleModal() {
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
         <div 
-          className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl animate-slideUp pointer-events-auto"
+          className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl animate-slideUp pointer-events-auto mx-4"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Botón cerrar */}
           <button
             onClick={handleClose}
-            className="absolute top-4 right-4 p-2 rounded-full transition-colors z-10"
+            className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 rounded-full transition-colors z-10"
             style={{ backgroundColor: 'rgba(203, 200, 191, 0.2)' }}
             aria-label="Cerrar"
           >
@@ -60,46 +60,46 @@ export default function SaturdayScheduleModal() {
           </button>
 
           {/* Contenido */}
-          <div className="p-8 text-center">
+          <div className="p-6 sm:p-8 text-center">
             {/* Icono */}
             <div 
-              className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-6"
+              className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-full mb-4 sm:mb-6"
               style={{ backgroundColor: '#cbc8bf' }}
             >
-              <Calendar className="w-8 h-8 text-white" />
+              <Calendar className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
             </div>
 
             {/* Título */}
-            <h2 className="text-3xl font-light mb-3" style={{ color: 'rgb(173, 173, 174)' }}>
+            <h2 className="text-2xl sm:text-3xl font-light mb-3" style={{ color: 'rgb(173, 173, 174)' }}>
               Nuevos Horarios
             </h2>
             
-            <p className="text-lg mb-8" style={{ color: 'rgb(100, 100, 100)' }}>
+            <p className="text-base sm:text-lg mb-6 sm:mb-8" style={{ color: 'rgb(100, 100, 100)' }}>
               Ampliamos nuestras clases los sábados
             </p>
 
             {/* Horarios */}
-            <div className="space-y-4 mb-8">
-              <div className="rounded-xl p-4" style={{ backgroundColor: '#cbc8bf' }}>
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <Clock className="w-5 h-5 text-white" />
-                  <p className="text-white font-medium text-lg">
+            <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
+              <div className="rounded-xl p-3 sm:p-4" style={{ backgroundColor: '#cbc8bf' }}>
+                <div className="flex items-center justify-center gap-2 mb-1 sm:mb-2">
+                  <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                  <p className="text-white font-medium text-base sm:text-lg">
                     Entrenamiento Funcional
                   </p>
                 </div>
-                <p className="text-white/95">
+                <p className="text-white/95 text-sm sm:text-base">
                   9:00 - 10:00 y 10:00 - 11:00
                 </p>
               </div>
 
-              <div className="rounded-xl p-4" style={{ backgroundColor: '#cbc8bf' }}>
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <Clock className="w-5 h-5 text-white" />
-                  <p className="text-white font-medium text-lg">
+              <div className="rounded-xl p-3 sm:p-4" style={{ backgroundColor: '#cbc8bf' }}>
+                <div className="flex items-center justify-center gap-2 mb-1 sm:mb-2">
+                  <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                  <p className="text-white font-medium text-base sm:text-lg">
                     Barre
                   </p>
                 </div>
-                <p className="text-white/95">
+                <p className="text-white/95 text-sm sm:text-base">
                   11:00 - 12:00
                 </p>
               </div>
@@ -109,7 +109,7 @@ export default function SaturdayScheduleModal() {
             <div className="flex flex-col sm:flex-row gap-3">
               <a
                 href="/reservas?from=modal"
-                className="flex-1 px-6 py-3 rounded-full font-medium transition-all hover:shadow-md text-center"
+                className="flex-1 px-5 py-2.5 sm:px-6 sm:py-3 rounded-full font-medium transition-all hover:shadow-md text-center text-sm sm:text-base"
                 style={{ backgroundColor: '#cbc8bf', color: 'white' }}
               >
                 Reservar Clases
@@ -117,14 +117,14 @@ export default function SaturdayScheduleModal() {
               
               <button
                 onClick={handleClose}
-                className="flex-1 px-6 py-3 rounded-full font-medium transition-all"
+                className="flex-1 px-5 py-2.5 sm:px-6 sm:py-3 rounded-full font-medium transition-all text-sm sm:text-base"
                 style={{ backgroundColor: '#cbc8bf', color: 'white' }}
               >
                 Entendido
               </button>
             </div>
 
-            <p className="text-sm mt-6" style={{ color: 'rgb(150, 150, 150)' }}>
+            <p className="text-xs sm:text-sm mt-4 sm:mt-6" style={{ color: 'rgb(150, 150, 150)' }}>
               Disponibles a partir del sábado 25 de octubre
             </p>
           </div>
