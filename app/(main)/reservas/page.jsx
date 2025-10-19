@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
 import { useAuth } from "../../components/AuthProvider";
 import { subscribeClassesByDay } from "../../../lib/classes";
 import { getUserReservations } from "../../../lib/reservations";
@@ -12,18 +11,11 @@ import DateSelect from "../../components/DateSelect";
 
 export default function ReservasPage() {
   const { user, isVerified } = useAuth();
-  const searchParams = useSearchParams();
-  
-  const [dateStr, setDateStr] = useState(() => {
-    // Primero intentar leer de URL, si no, usar hoy
-    const urlDate = searchParams.get('date');
-    if (urlDate) {
-      return urlDate;
-    }
-    const today = new Date();
-    return today.toISOString().split("T")[0];
-  });
-  
+ const [dateStr, setDateStr] = useState(() => {
+  const today = new Date();
+  const defaultDate = new Date(today.getFullYear(), 8, 16);
+  return today.toISOString().split("T")[0];
+});
   const [classes, setClasses] = useState([]);
   const [userReservations, setUserReservations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -86,30 +78,30 @@ export default function ReservasPage() {
     return () => unsubscribe();
   }, [user]);
 
-  // Días reservados
+    // Días reservados
   const reservedDays = useMemo(() => {
-    return new Set(
-      userReservations.map((r) => {
-        // Si es Timestamp de Firestore, usar toDate()
-        const resDate = r.dateTime?.toDate ? r.dateTime.toDate() : new Date(r.dateTime);
-        return resDate.toISOString().split("T")[0];
-      })
-    );
-  }, [userReservations]);
+  return new Set(
+    userReservations.map((r) => {
+      // Si es Timestamp de Firestore, usar toDate()
+      const resDate = r.dateTime?.toDate ? r.dateTime.toDate() : new Date(r.dateTime);
+      return resDate.toISOString().split("T")[0];
+    })
+  );
+}, [userReservations]);
 
-  // Filtrado por tipo de clase Y excluir 9 de octubre
-  const filteredClasses = useMemo(() => {
-    let result = filter === "todas" ? classes : classes.filter(c => c.type === filter);
-    
-    // Filtrar clases del 9 de octubre (festivo)
-    result = result.filter(c => {
-      const classDate = c.dateTime?.toDate ? c.dateTime.toDate() : new Date(c.dateTime);
-      const isOct9 = classDate.getMonth() === 9 && classDate.getDate() === 9;
-      return !isOct9;
-    });
-    
-    return result;
-  }, [classes, filter]);
+// Filtrado por tipo de clase Y excluir 9 de octubre
+const filteredClasses = useMemo(() => {
+  let result = filter === "todas" ? classes : classes.filter(c => c.type === filter);
+  
+  // Filtrar clases del 9 de octubre (festivo)
+  result = result.filter(c => {
+    const classDate = c.dateTime?.toDate ? c.dateTime.toDate() : new Date(c.dateTime);
+    const isOct9 = classDate.getMonth() === 9 && classDate.getDate() === 9;
+    return !isOct9;
+  });
+  
+  return result;
+}, [classes, filter]);
 
   return (
     <div className="w-full max-w-6xl mx-auto py-10 px-4 sm:px-6 md:px-0 flex flex-col">
@@ -122,49 +114,49 @@ export default function ReservasPage() {
 
       <DateSelect value={dateStr} onChange={setDateStr} />
 
-      {/* Filtros por tipo */}
-      <div className="overflow-x-auto hide-scrollbar mb-6">
-        <div className="flex gap-4 justify-start md:justify-center">
-          {classTypes.map(({ label, value }) => (
-            <button
-              key={value}
-              onClick={() => setFilter(value)}
-              className="px-4 py-2 font-medium rounded-full transition-colors flex-shrink-0"
-              style={{
-                backgroundColor: filter === value ? '#cbc8bf' : 'transparent',
-                color: filter === value ? 'white' : 'rgb(173,173,174)',
-              }}
-            >
-              {label}
-            </button>
-          ))}
+        {/* Filtros por tipo */}
+        <div className="overflow-x-auto hide-scrollbar mb-6">
+            <div className="flex gap-4 justify-start md:justify-center">
+                {classTypes.map(({ label, value }) => (
+                <button
+                    key={value}
+                    onClick={() => setFilter(value)}
+                    className="px-4 py-2 font-medium rounded-full transition-colors flex-shrink-0"
+                    style={{
+                    backgroundColor: filter === value ? '#cbc8bf' : 'transparent',
+                    color: filter === value ? 'white' : 'rgb(173,173,174)',
+                    }}
+                >
+                    {label}
+                </button>
+                ))}
+            </div>
         </div>
-      </div>
 
-      {loading ? (
-        <p className="text-center text-[rgb(173,173,174)]">Cargando clases...</p>
-      ) : dateStr === "2025-10-09" ? (
-        <div className="text-center py-8">
-          <p className="text-xl font-medium text-[rgb(173,173,174)] mb-2">
-            Centro cerrado - Festivo regional
-          </p>
-          <p className="text-[rgb(173,173,174)]">
-            No hay clases disponibles este día
-          </p>
-        </div>
-      ) : filteredClasses.length === 0 ? (
-        <p className="text-center text-[rgb(173,173,174)]">No hay clases disponibles para este filtro.</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {filteredClasses.map((c) => (
-            <ClassCard
-              key={c.id}
-              cls={c}
-              userReservations={userReservations}
-            />
-          ))}
-        </div>
-      )}
+        {loading ? (
+          <p className="text-center text-[rgb(173,173,174)]">Cargando clases...</p>
+        ) : dateStr === "2025-10-09" ? (
+          <div className="text-center py-8">
+            <p className="text-xl font-medium text-[rgb(173,173,174)] mb-2">
+              Centro cerrado - Festivo regional
+            </p>
+            <p className="text-[rgb(173,173,174)]">
+              No hay clases disponibles este día
+            </p>
+          </div>
+        ) : filteredClasses.length === 0 ? (
+          <p className="text-center text-[rgb(173,173,174)]">No hay clases disponibles para este filtro.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {filteredClasses.map((c) => (
+              <ClassCard
+                key={c.id}
+                cls={c}
+                userReservations={userReservations}
+              />
+            ))}
+          </div>
+        )}
     </div>
   );
 }

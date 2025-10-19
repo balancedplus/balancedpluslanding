@@ -1,24 +1,29 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { X, Calendar, Clock } from 'lucide-react';
 
 export default function SaturdayScheduleModal() {
   const [isVisible, setIsVisible] = useState(false);
-  const router = useRouter();
 
   useEffect(() => {
     // Verificar si ya se cerró en esta sesión
     const hasClosedInSession = sessionStorage.getItem('saturdayScheduleClosed');
     
-    if (!hasClosedInSession) {
+    // Verificar si viene del modal (parámetro en URL)
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromModal = urlParams.get('from') === 'modal';
+    
+    if (!hasClosedInSession && !fromModal) {
       // Mostrar modal después de 1.5 segundos solo si no se ha cerrado
       const timer = setTimeout(() => {
         setIsVisible(true);
       }, 1500);
 
       return () => clearTimeout(timer);
+    } else if (fromModal) {
+      // Si viene del modal, marcar como cerrado para esta sesión
+      sessionStorage.setItem('saturdayScheduleClosed', 'true');
     }
   }, []);
 
@@ -26,11 +31,6 @@ export default function SaturdayScheduleModal() {
     setIsVisible(false);
     // Guardar en sessionStorage que se cerró (dura hasta cerrar navegador)
     sessionStorage.setItem('saturdayScheduleClosed', 'true');
-  };
-
-  const handleGoToSchedule = () => {
-    handleClose(); // Cerrar primero
-    router.push('/reservas?date=2025-10-25'); // Navegar después
   };
 
   if (!isVisible) return null;
@@ -107,13 +107,13 @@ export default function SaturdayScheduleModal() {
 
             {/* Botones */}
             <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={handleGoToSchedule}
+              <a
+                href="/reservas?from=modal"
                 className="flex-1 px-6 py-3 rounded-full font-medium transition-all hover:shadow-md text-center"
                 style={{ backgroundColor: '#cbc8bf', color: 'white' }}
               >
-                Ver Horarios
-              </button>
+                Reservar Clases
+              </a>
               
               <button
                 onClick={handleClose}
