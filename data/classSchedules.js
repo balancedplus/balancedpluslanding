@@ -45,6 +45,12 @@ addSchedules(
   ["7:00-8:00","8:00-9:00","9:30-10:30","15:00-16:00","16:00-17:00","17:00-18:00","18:00-19:00","19:00-20:00"]
 );
 
+addSchedules(
+  "Funcional",
+  ["Sábado"],
+  ["9:00-10:00","10:00-11:00"]
+);
+
 
 addSchedules(
   "Barre",
@@ -62,6 +68,12 @@ addSchedules(
   "Barre",
   ["Lunes","Miércoles"],
   ["19:00-20:00"]
+);
+
+addSchedules(
+  "Barre",
+  ["Sábado"],
+  ["11:00-12:00"]
 );
 
 addSchedules(
