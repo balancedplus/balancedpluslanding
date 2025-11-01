@@ -170,7 +170,6 @@ export default function RootLayout({ children }) {
           <ToastProvider>
             <Header />
             <FreeTrialBanner />
-            <OctoberPromoModal />
             <main className="min-h-screen">{children}</main>
             <Footer />
             <CookieBanner />
