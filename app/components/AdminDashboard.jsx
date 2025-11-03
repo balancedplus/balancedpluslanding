@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from './AuthProvider';
 import { db } from '../../lib/firebase';
 import { makeReservation } from '../../lib/reservations';
+import { cancelReservation } from '../../lib/reservations';
 import { collection, getDocs, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { StatCard } from './admin/StatCard';
 import { AdminTable } from './admin/AdminTable';
@@ -18,18 +19,31 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 const PAGE_SIZE = 20;
 
-// Función auxiliar para determinar el tipo de usuario
+// Función auxiliar para determinar el tipo de usuario - ACTUALIZADA
 function getUserType(user) {
-  const hasActiveSubscription = user.subscription && 
-    (user.subscription.status === 'active' || user.subscription.status === 'trialing');
+  const subscription = user.subscription;
+  const status = subscription?.status;
+  
+  // Verificar si tiene pago pendiente
+  if (status === 'past_due') {
+    return {
+      type: 'past_due',
+      label: 'Pago pendiente',
+      status: 'past_due',
+      details: subscription.planType || 'Plan desconocido'
+    };
+  }
+  
+  const hasActiveSubscription = subscription && 
+    (status === 'active' || status === 'trialing');
   const hasCredits = user.hasClassCredits === true && (user.classCredits || 0) > 0;
   
   if (hasActiveSubscription) {
     return {
       type: 'subscription',
       label: 'Suscripción',
-      status: user.subscription.status,
-      details: user.subscription.planType || 'Plan desconocido'
+      status: status,
+      details: subscription.planType || 'Plan desconocido'
     };
   } else if (hasCredits) {
     return {
@@ -74,6 +88,13 @@ export default function AdminDashboard() {
   const [editingUser, setEditingUser] = useState(null);
   const [editingReservationType, setEditingReservationType] = useState('');
   const [savingChanges, setSavingChanges] = useState(false);
+
+  // Estados para edición de clases
+  const [editingClass, setEditingClass] = useState(null);
+  const [editCapacity, setEditCapacity] = useState(0);
+  const [newAttendeeName, setNewAttendeeName] = useState(''); // Cambiado a nombre
+  const [selectedUserForReservation, setSelectedUserForReservation] = useState(null);
+  const [savingClass, setSavingClass] = useState(false);
 
   const [resPage, setResPage] = useState(0);
   const [userPage, setUserPage] = useState(0);
@@ -202,13 +223,18 @@ const getDayName = (dayOfWeek) => {
   const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
   return days[dayOfWeek];
 };
+//** RESERVAS AUTOMÁTICAS */
 
 const processUserFixedReservations = async (user) => {
   setProcessingUser(user.id);
   
   try {
-    const startDate = new Date();
-    const endDate = new Date('2025-10-31');
+
+   const startDate = new Date('2025-11-03');
+    startDate.setHours(0, 0, 0, 0);
+    
+    // ⬅️ CAMBIO 2: Fecha de fin - 30 de noviembre
+    const endDate = new Date('2025-11-30');
     endDate.setHours(23, 59, 59, 999);
     
     let successful = 0;
@@ -224,11 +250,13 @@ const processUserFixedReservations = async (user) => {
     const currentDate = new Date(startDate);
     while (currentDate <= endDate) {
 
+      /*
         if (currentDate.getMonth() === 9 && currentDate.getDate() === 9) {
           console.log('⏭️ Saltando 9 de octubre (festivo regional)');
           currentDate.setDate(currentDate.getDate() + 1);
           continue;
         }
+          */
 
       const dayOfWeek = currentDate.getDay();
       
@@ -385,7 +413,239 @@ const processUserFixedReservations = async (user) => {
   }
 };
 
+// Estadísticas de suscripciones por plan y categoría
+const subscriptionStats = useMemo(() => {
+  const planStats = {};
+  const categoryStats = {
+    pilates: 0,
+    barre: 0,
+    funcional: 0,
+    yoga: 0,
+  };
+  
+  let totalActive = 0;
+  
+  users.forEach(user => {
+    const hasActiveSubscription = user.subscription && 
+      (user.subscription.status === 'active' || user.subscription.status === 'trialing');
+    
+    if (!hasActiveSubscription) return;
+    
+    totalActive++;
+    const planType = user.subscription.planType;
+    
+    // Contar por plan específico
+    if (!planStats[planType]) {
+      planStats[planType] = 0;
+    }
+    planStats[planType]++;
+    
+    // Contar por categoría
+    if (planType.includes('pilates')) categoryStats.pilates++;
+    if (planType.includes('barre')) categoryStats.barre++;
+    if (planType.includes('funcional')) categoryStats.funcional++;
+    if (planType.includes('yoga')) categoryStats.yoga++;
+  });
+  
+  return { planStats, categoryStats, totalActive };
+}, [users]);
 
+// Función para añadir asistente manual (solo nombre, sin crear reserva)
+const addManualAttendee = () => {
+  if (!newAttendeeName.trim()) return;
+  
+  // Generar un ID ficticio basado en el nombre
+  const fakeId = `manual_${Date.now()}_${newAttendeeName.trim().replace(/\s+/g, '_')}`;
+  
+  setEditingClass(prev => ({
+    ...prev,
+    atendees: [...(prev.atendees || []), fakeId],
+    // Guardar el nombre en un mapa adicional
+    manualAttendees: {
+      ...(prev.manualAttendees || {}),
+      [fakeId]: newAttendeeName.trim()
+    }
+  }));
+  setNewAttendeeName('');
+  setEditCapacity(prev => Math.max(0, prev - 1));
+};
+
+// Función para crear reserva real a un usuario registrado
+const createReservationForUser = async () => {
+  if (!selectedUserForReservation || !editingClass) return;
+  
+  setSavingClass(true);
+  try {
+    await makeReservation({
+      user: { uid: selectedUserForReservation.id, email: selectedUserForReservation.email },
+      cls: editingClass
+    });
+    
+    await fetchData();
+    setSelectedUserForReservation(null);
+    alert(`Reserva creada para ${selectedUserForReservation.name}`);
+  } catch (error) {
+    alert(`Error: ${error.message}`);
+  } finally {
+    setSavingClass(false);
+  }
+};
+
+// Función para guardar cambios (actualizada para manejar asistentes manuales)
+const saveClassChanges = async () => {
+  if (!editingClass) return;
+  
+  setSavingClass(true);
+  try {
+    const classRef = doc(db, 'classes', editingClass.id);
+    await updateDoc(classRef, {
+      capacityLeft: editCapacity,
+      atendees: editingClass.atendees || [],
+      manualAttendees: editingClass.manualAttendees || {}, // Guardar nombres de asistentes manuales
+      updatedAt: serverTimestamp()
+    });
+    
+    await fetchData();
+    setEditingClass(null);
+    alert('Clase actualizada correctamente');
+  } catch (error) {
+    console.error('Error actualizando clase:', error);
+    alert(`Error: ${error.message}`);
+  } finally {
+    setSavingClass(false);
+  }
+};
+
+// Función para eliminar asistente
+const removeAttendee = (userId) => {
+
+    if (!userId.startsWith('manual_')) {
+    alert('No puedes eliminar usuarios con reserva real desde aquí. Ve al perfil del usuario y cancela su reserva.');
+    return;
+  }
+
+  setEditingClass(prev => {
+    const newManualAttendees = { ...(prev.manualAttendees || {}) };
+    delete newManualAttendees[userId];
+    
+    return {
+      ...prev,
+      atendees: (prev.atendees || []).filter(id => id !== userId),
+      manualAttendees: newManualAttendees
+    };
+  });
+  
+  setEditCapacity(prev => prev + 1);
+};
+
+
+// Estadísticas de aforo
+const occupancyStats = useMemo(() => {
+  // Filtrar clases de las últimas 2 semanas que ya pasaron
+  const twoWeeksAgo = new Date();
+  twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+  const now = new Date();
+  
+  const pastClasses = classes.filter(c => {
+    const classDate = c.dateTime?.toDate ? c.dateTime.toDate() : new Date(c.dateTime);
+    return classDate >= twoWeeksAgo && classDate <= now;
+  });
+
+  if (pastClasses.length === 0) {
+    return {
+      totalClasses: 0,
+      avgOccupancy: 0,
+      byType: [],
+      byTimeSlot: [],
+      byDayOfWeek: [],
+      fullClasses: 0,
+      emptyClasses: 0
+    };
+  }
+
+  // Calcular ocupación total
+  let totalCapacity = 0;
+  let totalOccupied = 0;
+  let fullClasses = 0;
+  let emptyClasses = 0;
+
+  const byType = {};
+  const byTimeSlot = { morning: [], midday: [], afternoon: [] };
+  const byDayOfWeek = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
+
+  pastClasses.forEach(cls => {
+    const capacity = cls.capacity || 0;
+    const capacityLeft = cls.capacityLeft ?? capacity; // Si no existe, asumir que está vacía
+    const occupied = capacity - capacityLeft; // ✅ CORRECCIÓN
+    const occupancyRate = capacity > 0 ? (occupied / capacity) * 100 : 0;
+
+    totalCapacity += capacity;
+    totalOccupied += occupied;
+
+    if (capacityLeft === 0) fullClasses++; // ✅ Clase completa cuando capacityLeft = 0
+    if (occupied === 0) emptyClasses++;
+
+    // Por tipo
+    if (!byType[cls.type]) {
+      byType[cls.type] = { capacity: 0, occupied: 0, count: 0 };
+    }
+    byType[cls.type].capacity += capacity;
+    byType[cls.type].occupied += occupied;
+    byType[cls.type].count++;
+
+    // Por franja horaria
+    const classDate = cls.dateTime?.toDate ? cls.dateTime.toDate() : new Date(cls.dateTime);
+    const hour = classDate.getHours();
+    
+    if (hour < 15) {
+      byTimeSlot.morning.push(occupancyRate);
+    } else if (hour < 17) {
+      byTimeSlot.midday.push(occupancyRate);
+    } else {
+      byTimeSlot.afternoon.push(occupancyRate);
+    }
+
+    // Por día de la semana
+    const dayOfWeek = classDate.getDay();
+    byDayOfWeek[dayOfWeek].push(occupancyRate);
+  });
+
+  // Calcular promedios
+  const avgOccupancy = totalCapacity > 0 ? (totalOccupied / totalCapacity) * 100 : 0;
+
+  const typeStats = Object.entries(byType).map(([type, data]) => ({
+    type,
+    avgOccupancy: data.capacity > 0 ? (data.occupied / data.capacity) * 100 : 0,
+    totalClasses: data.count,
+    totalCapacity: data.capacity,
+    totalOccupied: data.occupied
+  }));
+
+  const timeSlotStats = Object.entries(byTimeSlot).map(([slot, rates]) => ({
+    slot,
+    avgOccupancy: rates.length > 0 ? rates.reduce((a, b) => a + b, 0) / rates.length : 0,
+    classCount: rates.length
+  }));
+
+  const dayStats = Object.entries(byDayOfWeek).map(([day, rates]) => ({
+    day: parseInt(day),
+    dayName: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'][parseInt(day)],
+    avgOccupancy: rates.length > 0 ? rates.reduce((a, b) => a + b, 0) / rates.length : 0,
+    classCount: rates.length
+  })).filter(d => d.classCount > 0);
+
+  return {
+    totalClasses: pastClasses.length,
+    avgOccupancy,
+    totalCapacity,
+    totalOccupied,
+    fullClasses,
+    emptyClasses,
+    byType: typeStats,
+    byTimeSlot: timeSlotStats,
+    byDayOfWeek: dayStats
+  };
+}, [classes]);
 
 
   useEffect(() => {
@@ -442,7 +702,7 @@ const processUserFixedReservations = async (user) => {
 
         allClasses = allClasses.map(c => ({
             ...c,
-            capacityLeft: (c.capacity || 0) - (c.atendees?.length || 0)
+           capacityLeft: c.capacityLeft ?? ((c.capacity || 0) - (c.atendees?.length || 0))
         }));
 
         allClasses.sort((a, b) => {
@@ -500,6 +760,7 @@ const processUserFixedReservations = async (user) => {
       total: users.length,
       subscription: 0,
       credits: 0,
+      past_due: 0,
       none: 0
     };
 
@@ -673,10 +934,12 @@ const processUserFixedReservations = async (user) => {
           value={userStats.credits}
           subtitle={`${((userStats.credits / userStats.total) * 100).toFixed(1)}%`}
         />
+        {/* ⬅️ CAMBIO: Reemplazar "Sin acceso" por "Pago pendiente" */}
         <StatCard 
-          title="Sin acceso" 
-          value={userStats.none}
-          subtitle={`${((userStats.none / userStats.total) * 100).toFixed(1)}%`}
+          title="Pago pendiente" 
+          value={userStats.past_due}
+          subtitle={userStats.past_due > 0 ? '⚠️ Requiere atención' : ''}
+          className="bg-yellow-50 border-yellow-200" // Opcional: resaltar en amarillo
         />
         <StatCard title="Reservas activas" value={reservations.length} />
       </div>
@@ -762,45 +1025,218 @@ const processUserFixedReservations = async (user) => {
                     { key: "capacityLeft", label: "Plazas libres" },
                 ]}
                 data={paginatedClasses}
-                onRowClick={(row) => setSelectedClass(row)}
+                onRowClick={(row) => {
+                  setEditingClass(row);
+                  setEditCapacity(row.capacityLeft || 0);
+                }}
             />
                 <div className="flex gap-2 mt-2">
                     <Button disabled={classPage===0} onClick={() => setClassPage(classPage-1)}>Anterior</Button>
                     <Button disabled={(classPage+1)*PAGE_SIZE >= classes.length} onClick={() => setClassPage(classPage+1)}>Siguiente</Button>
                 </div>
             
-                {selectedClass && (
-                <Dialog open={true} onOpenChange={() => setSelectedClass(null)}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Asistentes - {selectedClass.title}</DialogTitle>
-                            <DialogDescription>
-                                {selectedClass.atendees && selectedClass.atendees.length > 0 
-                                    ? `${selectedClass.atendees.length} asistentes` 
-                                    : 'No hay asistentes registrados'}
-                            </DialogDescription>
-                        </DialogHeader>
-                        <AdminTable
-                            columns={[
-                                { key: "name", label: "Nombre" },
-                                { key: "email", label: "Email" },
-                                { key: "uid", label: "UID" },
-                            ]}
-                            data={(selectedClass.atendees || []).map(uid => {
-                                const u = usersMap[uid];
-                                return {
-                                    uid,
-                                    name: u ? `${u.name || ""} ${u.surname || ""}` : `(desconocido - ${uid})`,
-                                    email: u?.email || "Sin email",
-                                };
-                            })}
+               {editingClass && (
+                <Dialog open={true} onOpenChange={() => setEditingClass(null)}>
+                  <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+                    <DialogHeader>
+                      <DialogTitle>Editar clase - {editingClass.title}</DialogTitle>
+                      <DialogDescription>
+                        {editingClass.dateTime?.toDate 
+                          ? editingClass.dateTime.toDate().toLocaleString('es-ES')
+                          : 'Sin fecha'}
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4 overflow-y-auto flex-1">
+                      {/* Capacidad disponible */}
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <label className="block text-sm font-medium mb-2">
+                          Plazas disponibles
+                        </label>
+                        <Input
+                          type="number"
+                          min="0"
+                          max={editingClass.capacity}
+                          value={editCapacity}
+                          onChange={(e) => setEditCapacity(parseInt(e.target.value) || 0)}
                         />
-                        <DialogFooter>
-                            <Button onClick={() => setSelectedClass(null)}>Cerrar</Button>
-                        </DialogFooter>
-                    </DialogContent>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Capacidad total: {editingClass.capacity} | 
+                          Ocupadas: {(editingClass.atendees || []).length}
+                        </p>
+                      </div>
+
+                      {/* Lista de asistentes */}
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="font-medium">
+                            Asistentes ({(editingClass.atendees || []).length})
+                          </h4>
+                        </div>
+                        
+                        {(editingClass.atendees || []).length > 0 ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+                            {(editingClass.atendees || []).map(userId => {
+                              const u = usersMap[userId];
+                              const isManual = userId.startsWith('manual_');
+                              const manualName = editingClass.manualAttendees?.[userId];
+                              
+                              return (
+                                <div key={userId} className="flex items-center justify-between bg-white p-2 rounded border text-sm">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-medium truncate flex items-center gap-2">
+                                      {isManual ? manualName : (u ? `${u.name || ''} ${u.surname || ''}` : userId)}
+                                      {isManual && (
+                                        <span className="text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded flex-shrink-0">
+                                          Manual
+                                        </span>
+                                      )}
+                                    </div>
+                                    {!isManual && u?.email && (
+                                      <div className="text-xs text-gray-500 truncate">
+                                        {u.email}
+                                      </div>
+                                    )}
+                                  </div>
+                                  {isManual && (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="ml-2 h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                      onClick={() => removeAttendee(userId)}
+                                    >
+                                      ✕
+                                    </Button>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <p className="text-gray-500 text-sm mb-4 text-center py-4 bg-gray-50 rounded">
+                            No hay asistentes
+                          </p>
+                        )}
+
+                        {/* Botón para mostrar opciones de añadir */}
+                        <Accordion type="single" collapsible className="border rounded-lg">
+                          <AccordionItem value="add-attendees" className="border-0">
+                            <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium">Añadir asistente</span>
+                              </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="px-4 pb-4">
+                              <Tabs defaultValue="manual">
+                                <TabsList className="grid w-full grid-cols-2 mb-3">
+                                  <TabsTrigger value="manual">Manual</TabsTrigger>
+                                  <TabsTrigger value="user">Usuario registrado</TabsTrigger>
+                                </TabsList>
+
+                                {/* Añadir asistente manual */}
+                                <TabsContent value="manual" className="mt-0">
+                                  <div className="space-y-2">
+                                    <label className="block text-sm font-medium">
+                                      Nombre completo
+                                    </label>
+                                    <div className="flex gap-2">
+                                      <Input
+                                        placeholder="Ej: Juan Pérez"
+                                        value={newAttendeeName}
+                                        onChange={(e) => setNewAttendeeName(e.target.value)}
+                                        onKeyPress={(e) => {
+                                          if (e.key === 'Enter') {
+                                            addManualAttendee();
+                                          }
+                                        }}
+                                      />
+                                      <Button onClick={addManualAttendee}>
+                                        Añadir
+                                      </Button>
+                                    </div>
+                                    <p className="text-xs text-gray-500">
+                                      Para pruebas con personas no registradas
+                                    </p>
+                                  </div>
+                                </TabsContent>
+
+                                {/* Crear reserva para usuario registrado */}
+                                <TabsContent value="user" className="mt-0">
+                                  <div className="space-y-2">
+                                    <label className="block text-sm font-medium">
+                                      Seleccionar usuario
+                                    </label>
+                                    <Select
+                                      value={selectedUserForReservation?.id || ''}
+                                      onValueChange={(userId) => {
+                                        const user = users.find(u => u.id === userId);
+                                        setSelectedUserForReservation(user);
+                                      }}
+                                    >
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Buscar usuario..." />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {users
+                                          .filter(u => {
+                                            const userType = getUserType(u);
+                                            return userType.type !== 'none';
+                                          })
+                                          .map(u => (
+                                            <SelectItem key={u.id} value={u.id}>
+                                              {`${u.name || ''} ${u.surname || ''}`} - {u.email}
+                                            </SelectItem>
+                                          ))}
+                                      </SelectContent>
+                                    </Select>
+                                    
+                                    {selectedUserForReservation && (
+                                      <div className="text-xs bg-blue-50 p-2 rounded border border-blue-100">
+                                        <div><strong>Tipo:</strong> {getUserType(selectedUserForReservation).label}</div>
+                                        <div><strong>Detalles:</strong> {getUserType(selectedUserForReservation).details}</div>
+                                      </div>
+                                    )}
+                                    
+                                    <Button 
+                                      onClick={createReservationForUser}
+                                      disabled={!selectedUserForReservation || savingClass}
+                                      className="w-full"
+                                    >
+                                      {savingClass ? 'Creando reserva...' : 'Crear reserva'}
+                                    </Button>
+                                    <p className="text-xs text-gray-500">
+                                      Crea una reserva real consumiendo clases del usuario
+                                    </p>
+                                  </div>
+                                </TabsContent>
+                              </Tabs>
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
+                      </div>
+                    </div>
+
+                    <DialogFooter>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          setEditingClass(null);
+                          setSelectedUserForReservation(null);
+                        }}
+                        disabled={savingClass}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button 
+                        onClick={saveClassChanges}
+                        disabled={savingClass}
+                      >
+                        {savingClass ? 'Guardando...' : 'Guardar cambios'}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
                 </Dialog>
-                )}
+              )}
             </TabsContent>
 
             <TabsContent value="usuarios">
@@ -847,6 +1283,7 @@ const processUserFixedReservations = async (user) => {
                           <SelectItem value="all">Todos</SelectItem>
                           <SelectItem value="subscription">Con suscripción</SelectItem>
                           <SelectItem value="credits">Con créditos</SelectItem>
+                          <SelectItem value="past_due">Pago pendiente</SelectItem>
                           <SelectItem value="none">Sin acceso</SelectItem>
                         </SelectContent>
                       </Select>
@@ -957,7 +1394,7 @@ const processUserFixedReservations = async (user) => {
 
                 {selectedUser && (
                     <Dialog open={true} onOpenChange={() => setSelectedUser(null)}>
-                        <DialogContent className="max-w-4xl">
+                        <DialogContent className="max-w-[95vw] w-full sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
                         <DialogHeader>
                             <DialogTitle>Detalles de {selectedUser.name || selectedUser.email}</DialogTitle>
                             <DialogDescription>
@@ -965,7 +1402,7 @@ const processUserFixedReservations = async (user) => {
                             </DialogDescription>
                         </DialogHeader>
 
-                        <div className="space-y-4">
+                        <div className="space-y-4 overflow-y-auto flex-1 pr-2 ">
                           <div className="bg-gray-50 p-4 rounded-lg">
                             <h4 className="font-medium mb-2">Información del usuario</h4>
                             <div className="grid grid-cols-2 gap-4 text-sm">
@@ -986,18 +1423,55 @@ const processUserFixedReservations = async (user) => {
                             </div>
                           </div>
 
+                          {selectedUser.subscription && selectedUser.subscription.classesLeftThisPeriod && (
+                            <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                              <h4 className="font-medium mb-2 text-sm sm:text-base">Clases restantes este período</h4>
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-xs sm:text-sm">
+                                {Object.entries(selectedUser.subscription.classesLeftThisPeriod).map(([type, count]) => (
+                                  <div key={type} className="text-center p-2 bg-white rounded">
+                                    <div className="font-bold text-lg">{count}</div>
+                                    <div className="text-gray-600 capitalize">{type}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
                           <div>
                             <h4 className="font-medium mb-2">
                               Reservas ({userReservations.length})
                             </h4>
                             {userReservations.length > 0 ? (
                               <AdminTable
-                                  columns={[
+                                columns={[
                                   { key: 'classTitle', label: 'Clase' },
                                   { key: 'dateTime', label: 'Día' },
                                   { key: 'monitor', label: 'Profesor' },
-                                  ]}
-                                  data={userReservations}
+                                  { key: 'actions', label: 'Acciones' }
+                                ]}
+                                data={userReservations.map(r => ({
+                                  ...r,
+                                  actions: (
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      onClick={async (e) => {
+                                        e.stopPropagation();
+                                        if (window.confirm(`¿Cancelar reserva de ${r.classTitle}?`)) {
+                                          try {
+                                            await cancelReservation(r.id, { uid: selectedUser.id });
+                                            await fetchData();
+                                            alert('Reserva cancelada correctamente');
+                                          } catch (error) {
+                                            alert(`Error: ${error.message}`);
+                                          }
+                                        }
+                                      }}
+                                    >
+                                      Cancelar
+                                    </Button>
+                                  )
+                                }))}
                               />
                             ) : (
                               <p className="text-gray-500 text-sm">No tiene reservas activas</p>
@@ -1337,7 +1811,7 @@ const processUserFixedReservations = async (user) => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {((reservations.length / userStats.total) * 100).toFixed(1)}%
+                  {((userStats.subscription / (userStats.total-duplicateUsers.length)) * 100).toFixed(1)}%
                 </div>
                 <p className="text-sm text-gray-600 mt-1">
                   Usuarios con reservas activas
@@ -1346,6 +1820,219 @@ const processUserFixedReservations = async (user) => {
             </Card>
           </div>
         </div>
+
+        {/* Estadísticas de planes */}
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold mb-4">Estadísticas de planes</h2>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Por plan específico */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Por plan específico</CardTitle>
+                <CardDescription>
+                  Total activos: {subscriptionStats.totalActive}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {Object.entries(subscriptionStats.planStats)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([plan, count]) => {
+                      const percentage = subscriptionStats.totalActive > 0
+                        ? ((count / subscriptionStats.totalActive) * 100).toFixed(1)
+                        : 0;
+                      return (
+                        <div key={plan} className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{plan}</span>
+                              <span className="text-sm text-gray-500">({percentage}%)</span>
+                            </div>
+                            <div className="mt-1 w-full bg-gray-200 rounded-full h-2">
+                              <div
+                                className="bg-blue-600 h-2 rounded-full transition-all"
+                                style={{ width: `${percentage}%` }}
+                              />
+                            </div>
+                          </div>
+                          <span className="ml-4 font-bold text-lg">{count}</span>
+                        </div>
+                      );
+                    })}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Por categoría */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Por categoría</CardTitle>
+                <CardDescription>
+                  Usuarios que incluyen cada tipo de clase
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {Object.entries(subscriptionStats.categoryStats)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([category, count]) => {
+                      const percentage = subscriptionStats.totalActive > 0
+                        ? ((count / subscriptionStats.totalActive) * 100).toFixed(1)
+                        : 0;
+                      return (
+                        <div key={category} className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium capitalize">{category}</span>
+                              <span className="text-sm text-gray-500">({percentage}%)</span>
+                            </div>
+                            <div className="mt-1 w-full bg-gray-200 rounded-full h-2">
+                              <div
+                                className="bg-green-600 h-2 rounded-full transition-all"
+                                style={{ width: `${percentage}%` }}
+                              />
+                            </div>
+                          </div>
+                          <span className="ml-4 font-bold text-lg">{count}</span>
+                        </div>
+                      );
+                    })}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+      {/* Estadísticas de aforo */}
+<div className="mt-8">
+  <h2 className="text-xl font-semibold mb-4">Estadísticas de aforo (últimas 2 semanas)</h2>
+  
+  {/* Resumen general */}
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <StatCard 
+      title="Ocupación promedio" 
+      value={`${occupancyStats.avgOccupancy.toFixed(1)}%`}
+      subtitle={`${occupancyStats.totalOccupied} / ${occupancyStats.totalCapacity} plazas`}
+    />
+    <StatCard 
+      title="Clases completas" 
+      value={occupancyStats.fullClasses}
+      subtitle={`${((occupancyStats.fullClasses / occupancyStats.totalClasses) * 100).toFixed(1)}% del total`}
+    />
+    <StatCard 
+      title="Clases vacías" 
+      value={occupancyStats.emptyClasses}
+      subtitle={`${((occupancyStats.emptyClasses / occupancyStats.totalClasses) * 100).toFixed(1)}% del total`}
+    />
+    <StatCard 
+      title="Total clases" 
+      value={occupancyStats.totalClasses}
+    />
+  </div>
+
+  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    {/* Por tipo de clase */}
+    <Card>
+      <CardHeader>
+        <CardTitle>Por tipo de clase</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {occupancyStats.byType
+            .sort((a, b) => b.avgOccupancy - a.avgOccupancy)
+            .map(({ type, avgOccupancy, totalClasses, totalOccupied, totalCapacity }) => (
+              <div key={type} className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium capitalize">{type}</span>
+                    <span className="text-sm text-gray-500">({totalClasses} clases)</span>
+                  </div>
+                  <div className="text-xs text-gray-500 mb-1">
+                    {totalOccupied} / {totalCapacity} plazas
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-blue-600 h-2 rounded-full transition-all"
+                      style={{ width: `${avgOccupancy}%` }}
+                    />
+                  </div>
+                </div>
+                <span className="ml-4 font-bold text-lg">{avgOccupancy.toFixed(1)}%</span>
+              </div>
+            ))}
+        </div>
+      </CardContent>
+    </Card>
+
+    {/* Por franja horaria */}
+    <Card>
+      <CardHeader>
+        <CardTitle>Por franja horaria</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {occupancyStats.byTimeSlot.map(({ slot, avgOccupancy, classCount }) => {
+            const slotNames = {
+              morning: 'Mañana (7-12h)',
+              midday: 'Mediodía (15-17h)',
+              afternoon: 'Tarde (15-21h)'
+            };
+            
+            return (
+              <div key={slot} className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{slotNames[slot]}</span>
+                    <span className="text-sm text-gray-500">({classCount} clases)</span>
+                  </div>
+                  <div className="mt-1 w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-green-600 h-2 rounded-full transition-all"
+                      style={{ width: `${avgOccupancy}%` }}
+                    />
+                  </div>
+                </div>
+                <span className="ml-4 font-bold text-lg">{avgOccupancy.toFixed(1)}%</span>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+
+    {/* Por día de la semana */}
+    <Card>
+      <CardHeader>
+        <CardTitle>Por día de la semana</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {occupancyStats.byDayOfWeek
+            .sort((a, b) => b.avgOccupancy - a.avgOccupancy)
+            .map(({ day, dayName, avgOccupancy, classCount }) => (
+              <div key={day} className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{dayName}</span>
+                    <span className="text-sm text-gray-500">({classCount} clases)</span>
+                  </div>
+                  <div className="mt-1 w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-purple-600 h-2 rounded-full transition-all"
+                      style={{ width: `${avgOccupancy}%` }}
+                    />
+                  </div>
+                </div>
+                <span className="ml-4 font-bold text-lg">{avgOccupancy.toFixed(1)}%</span>
+              </div>
+            ))}
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+</div>
+
     </div>
   );
 }
