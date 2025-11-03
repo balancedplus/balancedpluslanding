@@ -30,8 +30,10 @@ export default function ClassCard({ cls, userReservations = [] }) {
   const { showSuccess, showError, showInfo } = useToast();
   const router = useRouter();
 
-  const isUnlimitedPlan = user?.subscription?.type === 'combinadas_ilimitadas';
-  const maxClassesPerDay = isUnlimitedPlan ? 1 : 2;
+  //const isUnlimitedPlan = user?.subscription?.type === 'combinadas_ilimitadas';
+  //const maxClassesPerDay = isUnlimitedPlan ? 1 : 2;
+
+  const maxClassesPerDay = 2;
 
 
   // Crear set de días ya reservados
