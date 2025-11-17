@@ -5,7 +5,7 @@ import AuthProvider from './components/AuthProvider'
 import CookieBanner from './components/CookieBanner'
 import { ToastProvider } from './components/ToastProvider'
 import FreeTrialBanner from './components/FreeTrialBanner'
-import OctoberPromoModal from './components/OctoberPromoModal'
+import BlackFridayPromoModal from './components/BlackFrifayPromoModal'
 
 export const metadata = {
   metadataBase: new URL('https://balancedplus.es'),
@@ -170,6 +170,7 @@ export default function RootLayout({ children }) {
           <ToastProvider>
             <Header />
             <FreeTrialBanner />
+            <BlackFridayPromoModal />
             <main className="min-h-screen">{children}</main>
             <Footer />
             <CookieBanner />
