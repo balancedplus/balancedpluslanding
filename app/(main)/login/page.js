@@ -73,7 +73,7 @@ export default function LoginPage() {
 
       <p className="mt-6 text-center text-sm" style={{ color: "rgb(173, 173, 174)" }}>
         ¿No tienes cuenta?{" "}
-        <Link href="/register" className="font-medium">
+        <Link href="/altasocio" className="font-medium">
           Regístrate aquí
         </Link>
       </p>

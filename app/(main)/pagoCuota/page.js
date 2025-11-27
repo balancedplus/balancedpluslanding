@@ -1,40 +1,8 @@
-// app/myReservations/layout.jsx
-/*
-"use client";
-
-import { useAuth } from "../../components/AuthProvider";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-
-export default function MyReservationsLayout({ children }) {
-  const { user, loading, isVerified } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-
-    if (loading) return; // aún inicializando
-    if (!user || !isVerified) {
-      router.push("/miPerfil");
-    }
-  }, [user, loading, router]);
-
-  if (loading || !user) {
-    return (
-      <div className="w-full max-w-4xl mx-auto py-10 text-center text-[rgb(173,173,174)]">
-        Cargando autenticación...
-      </div>
-    );
-  }
-
-  return <>{children}</>;
-}
-*/
-
 'use client';
 
 import { useEffect, useState } from 'react';
 
-export default function MisReservasPage() {
+export default function PagoCuotaPage() {
   const [iframeLoaded, setIframeLoaded] = useState(false);
 
   useEffect(() => {
@@ -67,11 +35,10 @@ export default function MisReservasPage() {
 
   return (
     <div className="w-full min-h-screen">
-
       {/* Iframe de ismygym */}
       <div className="w-full" style={{ minHeight: '928px' }}>
         <iframe
-          src="https://balanced-iframe.ismygym.com/centro-balanced+/mis-reservas?from=web"
+          src="https://balanced-iframe.ismygym.com/centro-balanced+/cuota-socio?from=web"
           id="ism-iframe"
           sandbox="allow-scripts allow-modals allow-forms allow-popups allow-same-origin allow-popups-to-escape-sandbox allow-top-navigation"
           allow="geolocation; payment"
