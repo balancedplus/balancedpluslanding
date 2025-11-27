@@ -1,69 +1,44 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "../components/AuthProvider"; // ajusta la ruta según tu proyecto
+import { useRouter } from "next/navigation";
+import { useAuth } from "../components/AuthProvider";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { loadStripe } from "@stripe/stripe-js";
 
 const PlanSection = ({ title, plans }) => {
   const [open, setOpen] = useState(true);
-  const { user } = useAuth(); // <--- aquí traes el user
+  const { user } = useAuth();
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Suscripciones
-  const handleSubscribe = async (stripePriceId, planType) => {
-  if (!user) return alert("Inicia sesión primero");
-  if (isLoading) return; // Prevenir múltiples clics
-
-  setIsLoading(true);
-
-  const functions = getFunctions();
-  const createCheckoutSession = httpsCallable(functions, "createCheckoutSession");
-
-  try {
-    // Encontrar el plan actual para obtener su precio
-    const currentPlan = plans.find(p => p.stripePriceId === stripePriceId);
-    
-    const { data } = await createCheckoutSession({ 
-      userId: user.uid, 
-      stripePriceId, 
-      planType, 
-      mode: "subscription",
-      planPrice: currentPlan?.price || 0
-    });
-    
-    const stripe = await loadStripe("pk_live_51RiAZFJK71CZc9AoVuhx4u00tmq12GISu8FOBAKd93LO379H01xTNh8IvrvTdMOOi52xn1jPprVDif7UUthUv2oh00PJRYVxHz");
-    await stripe.redirectToCheckout({ sessionId: data.sessionId });
-  } catch (err) {
-    console.error(err);
-    alert("Error creando la sesión de suscripción");
-  } finally {
-    setIsLoading(false);
-  }
-};
+  // Redirigir al alta de socio
+  const handleSubscribe = () => {
+    router.push('/altaSocio'); // Ajusta la ruta según donde hayas puesto el componente
+  };
 
   // Pagos únicos (packs)
-const handlePurchase = async (stripePriceId, planType, classesCredit) => {
-  if (!user) return alert("Inicia sesión primero");
+  const handlePurchase = async (stripePriceId, planType, classesCredit) => {
+    if (!user) return alert("Inicia sesión primero");
 
-  const functions = getFunctions();
-  const createCheckoutSession = httpsCallable(functions, "createCheckoutSession");
+    const functions = getFunctions();
+    const createCheckoutSession = httpsCallable(functions, "createCheckoutSession");
 
-  try { 
-    const { data } = await createCheckoutSession({ 
-      userId: user.uid, 
-      stripePriceId, 
-      planType, 
-      mode: "payment", 
-      classesCredit
-    });
-    const stripe = await loadStripe("pk_live_51RiAZFJK71CZc9AoVuhx4u00tmq12GISu8FOBAKd93LO379H01xTNh8IvrvTdMOOi52xn1jPprVDif7UUthUv2oh00PJRYVxHz"); 
-    await stripe.redirectToCheckout({ sessionId: data.sessionId });
-  } catch (err) {
-    console.error(err);
-    alert("Error creando la sesión de pago único");
-  }
-};
+    try { 
+      const { data } = await createCheckoutSession({ 
+        userId: user.uid, 
+        stripePriceId, 
+        planType, 
+        mode: "payment", 
+        classesCredit
+      });
+      const stripe = await loadStripe("pk_live_51RiAZFJK71CZc9AoVuhx4u00tmq12GISu8FOBAKd93LO379H01xTNh8IvrvTdMOOi52xn1jPprVDif7UUthUv2oh00PJRYVxHz"); 
+      await stripe.redirectToCheckout({ sessionId: data.sessionId });
+    } catch (err) {
+      console.error(err);
+      alert("Error creando la sesión de pago único");
+    }
+  };
 
   return (
     <div className="w-full max-w-5xl mx-auto mb-12 px-12 sm:px-6 md:px-0">
@@ -99,7 +74,7 @@ const handlePurchase = async (stripePriceId, planType, classesCredit) => {
 
               {plan.type.includes("session") ? (
                 <button
-                  onClick={() => handlePurchase(plan.stripePriceId, plan.type, plan.classesCredit)}
+                  onClick={() => handleSubscribe()}
                   className="mt-3 rounded-md py-2 font-medium transition w-full"
                   style={{ backgroundColor: "#fff", color: "rgb(173, 173, 174)" }}
                 >
@@ -107,12 +82,11 @@ const handlePurchase = async (stripePriceId, planType, classesCredit) => {
                 </button>
               ) : (
                 <button
-                  onClick={() => handleSubscribe(plan.stripePriceId, plan.type)}
-                  disabled={isLoading}
-                  className="mt-3 rounded-md py-2 font-medium transition w-full disabled:opacity-50"
+                  onClick={handleSubscribe}
+                  className="mt-3 rounded-md py-2 font-medium transition w-full"
                   style={{ backgroundColor: "#fff", color: "rgb(173, 173, 174)" }}
                 >
-                  {isLoading ? "Cargando..." : "Suscribirse"}
+                  Suscribirse
                 </button>
               )}
             </div>

@@ -37,12 +37,11 @@ export default function Header() {
     { href: '/reservas', label: 'Reservar Clases' },
   ];
 
-  const rightLinks = user
-    ? [
-        { href: '/misReservas', label: 'Mis Reservas' },
-        { href: '/miPerfil', label: 'Mi perfil' },
-      ]
-    : [{ href: '/login', label: 'Iniciar Sesión' }];
+  const rightLinks = [
+    { href: '/misReservas', label: 'Mis Reservas' },
+    { href: '/altaSocio', label: 'Alta de Socio' },
+    { href: '/pagoCuota', label: 'Pago de Cuota' },
+  ];
 
   return (
     <>
@@ -95,7 +94,7 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Menú móvil desplegable MEJORADO */}
+        {/* Menú móvil desplegable */}
         <AnimatePresence>
           {menuOpen && (
             <motion.div
