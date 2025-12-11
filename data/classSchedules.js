@@ -1,6 +1,6 @@
 // data/classSchedules.js
 
-export const classSchedules = [];
+export let classSchedules = [];
 
 // Helper para añadir horarios repetidos
 const addSchedules = (type, days, times) => {
@@ -79,5 +79,20 @@ addSchedules(
 addSchedules(
   "Yoga",
   ["Martes", "Jueves"],
-  ["19:00-20:00","20:00-21:00"]
+  ["20:00-21:00"]
+);
+
+addSchedules(
+  "Yoga",
+  ["Miércoles"],
+  ["11:30-12:30"]
+);
+
+classSchedules = classSchedules.filter(
+  (c) =>
+    !(
+      c.type === "P. Reformer" &&
+      c.time === "15:00-16:00" &&
+      (c.day === "Miércoles" || c.day === "Viernes")
+    )
 );
