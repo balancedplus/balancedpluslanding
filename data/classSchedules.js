@@ -35,14 +35,14 @@ addSchedules(
 
 addSchedules(
   "Funcional",
-  ["Lunes", "Martes", "Miércoles", "Jueves"],
-  ["7:00-8:00","8:00-9:00","9:30-10:30","15:00-16:00","16:00-17:00","17:00-18:00","18:00-19:00","19:00-20:00","20:00-21:00"]
+  ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"],
+  ["6:00-7:00","7:00-8:00","8:00-9:00","9:30-10:30","15:00-16:00","16:00-17:00","17:00-18:00","18:00-19:00","19:00-20:00"]
 );
 
 addSchedules(
   "Funcional",
-  ["Viernes"],
-  ["7:00-8:00","8:00-9:00","9:30-10:30","15:00-16:00","16:00-17:00","17:00-18:00","18:00-19:00","19:00-20:00"]
+  ["Lunes", "Martes", "Miércoles"],
+  ["20:00-21:00"]
 );
 
 addSchedules(
@@ -55,13 +55,19 @@ addSchedules(
 addSchedules(
   "Barre",
   ["Lunes","Martes","Miércoles","Jueves"],
-  ["8:30-9:30","9:30-10:30","10:30-11:30","17:00-18:00","18:00-19:00"]
+  ["8:30-9:30","9:30-10:30","17:00-18:00","18:00-19:00"]
 );
 
 addSchedules(
   "Barre",
   ["Viernes"],
-  ["8:30-9:30","9:30-10:30","10:30-11:30"]
+  ["8:30-9:30","9:30-10:30"]
+);
+
+addSchedules(
+  "Barre",
+  ["Lunes","Miércoles","Viernes"],
+  ["10:30-11:30"]
 );
 
 addSchedules(
@@ -93,6 +99,6 @@ classSchedules = classSchedules.filter(
     !(
       c.type === "P. Reformer" &&
       c.time === "15:00-16:00" &&
-      (c.day === "Miércoles" || c.day === "Viernes")
+      c.day !== "Martes"
     )
 );
