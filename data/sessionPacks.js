@@ -2,7 +2,7 @@
 export const sessionPacks = [
   {
     title: "Sesión Individual",
-    price: "20",
+    price: "22",
     sessionPrice: "",
     type: "individual_session",
     classesCredit: "1"
