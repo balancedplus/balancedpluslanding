@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "../components/AuthProvider";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { loadStripe } from "@stripe/stripe-js";
@@ -9,13 +8,11 @@ import { loadStripe } from "@stripe/stripe-js";
 const PlanSection = ({ title, plans }) => {
   const [open, setOpen] = useState(true);
   const { user } = useAuth();
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Redirigir al alta de socio
-  const handleSubscribe = () => {
-    router.push('/altaSocio'); // Ajusta la ruta según donde hayas puesto el componente
-  };
+  // Abrir WhatsApp con el mensaje del plan
+  const whatsappUrl = (message) =>
+    `https://wa.me/34678528165?text=${encodeURIComponent(message)}`;
 
   // Pagos únicos (packs)
   const handlePurchase = async (stripePriceId, planType, classesCredit) => {
@@ -73,21 +70,25 @@ const PlanSection = ({ title, plans }) => {
               <p className="mb-4 font-thin text-white">Sin permanencia</p>
 
               {plan.type.includes("session") ? (
-                <button
-                  onClick={() => handleSubscribe()}
-                  className="mt-3 rounded-md py-2 font-medium transition w-full"
+                <a
+                  href={whatsappUrl(`Hola, quiero comprar una ${plan.title}`)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block mt-3 rounded-md py-2 font-medium transition w-full"
                   style={{ backgroundColor: "#fff", color: "rgb(173, 173, 174)" }}
                 >
                   Comprar
-                </button>
+                </a>
               ) : (
-                <button
-                  onClick={handleSubscribe}
-                  className="mt-3 rounded-md py-2 font-medium transition w-full"
+                <a
+                  href={whatsappUrl(`Hola, quiero suscribirme al plan ${title} - ${plan.title}`)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block mt-3 rounded-md py-2 font-medium transition w-full"
                   style={{ backgroundColor: "#fff", color: "rgb(173, 173, 174)" }}
                 >
                   Suscribirse
-                </button>
+                </a>
               )}
             </div>
           ))}
